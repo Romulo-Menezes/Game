@@ -52,7 +52,7 @@ bool Render (void){
  
   SDL_RenderClear(render);
  
-  SDL_Rect sRect = {P1x, P1y, 23, 44};
+  SDL_Rect sRect = {P1x, P1y, 40, 47};
  
   SDL_Rect dRect = {Px, Py, 96, 116};
  
@@ -63,7 +63,7 @@ bool Render (void){
  
 bool XPlayer (void){
    
-    PlayerSurface = IMG_Load("Sprites/Player.png");
+    PlayerSurface = IMG_Load("Sprites/Morte.png");
  
     PlayerTexture = SDL_CreateTextureFromSurface(render, PlayerSurface);
  
@@ -78,89 +78,100 @@ int main (void){
 	if (!Inicio()){
 		printf ("Ocorreu um erro ao iniciar!\n");
 	}
-	else {
-		while (Play){
-			Render();
-			XPlayer();
-			while(SDL_PollEvent(&event)){
-				//X para fechar
-				if (event.type == SDL_QUIT){
-					Play = false;
-				}
-				//Usuário pressionou uma tecla
-				if (event.type == SDL_KEYDOWN){
-					if (event.key.keysym.sym == SDLK_UP)
-						cima = true;
-					if (event.key.keysym.sym == SDLK_DOWN)
-						baixo = true;
-					if (event.key.keysym.sym == SDLK_LEFT)
-						esquerda = true;
-					if (event.key.keysym.sym == SDLK_RIGHT)
-						direita = true;					
-				}
-				//Usuário parou de pressionar a tecla
-				else if (event.type == SDL_KEYUP){
-					if (event.key.keysym.sym == SDLK_UP)
-						cima = false;
-					if (event.key.keysym.sym == SDLK_DOWN)
-						baixo = false;
-					if (event.key.keysym.sym == SDLK_LEFT)
-						esquerda = false;
-					if (event.key.keysym.sym == SDLK_RIGHT)
-						direita = false;
-				}
-				//Parte de Lógica
-				if (esquerda == true && direita == false && cima == false && baixo == false){
-					Px = Px - 6;
-					P1y = 44;
-					if(P1x < 69){
-						P1x += 23;
+	else{
+		const int FPS = 60;
+		const int FrameDelay = 1000 / FPS;
+
+		unsigned long FrameStart;
+		int FrameTime;
+			while (Play){
+				FrameStart =SDL_GetTicks();
+
+				Render();
+				XPlayer();
+				while(SDL_PollEvent(&event)){
+					//X para fechar
+					if (event.type == SDL_QUIT){
+						Play = false;
 					}
-					else{
+					//Usuário pressionou uma tecla
+					if (event.type == SDL_KEYDOWN){
+						if (event.key.keysym.sym == SDLK_UP)
+							cima = true;
+						if (event.key.keysym.sym == SDLK_DOWN)
+							baixo = true;
+						if (event.key.keysym.sym == SDLK_LEFT)
+							esquerda = true;
+						if (event.key.keysym.sym == SDLK_RIGHT)
+							direita = true;					
+					}
+					//Usuário parou de pressionar a tecla
+					else if (event.type == SDL_KEYUP){
+						if (event.key.keysym.sym == SDLK_UP)
+							cima = false;
+						if (event.key.keysym.sym == SDLK_DOWN)
+							baixo = false;
+						if (event.key.keysym.sym == SDLK_LEFT)
+							esquerda = false;
+						if (event.key.keysym.sym == SDLK_RIGHT)
+							direita = false;
+					}
+					//Parte de Lógica
+					if (esquerda == true && direita == false && cima == false && baixo == false){
+						Px = Px - 6;
+						P1y = 47;
+						if(P1x < 120){
+							P1x += 40;
+						}
+						else{
+							P1x = 0;
+						}
+					}
+					if (direita == true && esquerda == false && cima == false && baixo == false){
+						Px = Px + 6;
+						P1y = 94;
+						if(P1x < 120){
+							P1x += 40;
+						}
+						else{
+							P1x = 0;
+						}
+					}
+					if (cima == true && baixo == false && esquerda == false && direita == false){
+						Py = Py - 6;
+						P1y = 141;
+						if(P1x < 120){
+							P1x += 40;
+						}
+						else{
+							P1x = 0;
+						}
+					}
+					if (baixo == true && cima == false && esquerda == false && direita == false){
+						Py = Py + 6;
+						P1y = 0;
+						if(P1x < 120){
+							P1x += 40;
+						}
+						else{
+							P1x = 0;
+						}
+					}
+					if ((cima == true && baixo == true) || (esquerda == true && direita == true) ||
+						(cima == true && esquerda == true) || (cima == true && direita == true) ||
+						(baixo == true && esquerda == true) || (baixo == true && direita == true)){
+						P1x = 0;
+					}
+					if(cima == false && baixo == false && esquerda == false && direita == false){
 						P1x = 0;
 					}
 				}
-				if (direita == true && esquerda == false && cima == false && baixo == false){
-					Px = Px + 6;
-					P1y = 88;
-					if(P1x < 69){
-						P1x += 23;
-					}
-					else{
-						P1x = 0;
-					}
-				}
-				if (cima == true && baixo == false && esquerda == false && direita == false){
-					Py = Py - 6;
-					P1y = 132;
-					if(P1x < 69){
-						P1x += 23;
-					}
-					else{
-						P1x = 0;
-					}
-				}
-				if (baixo == true && cima == false && esquerda == false && direita == false){
-					Py = Py + 6;
-					P1y = 0;
-					if(P1x < 69){
-						P1x += 23;
-					}
-					else{
-						P1x = 0;
-					}
-				}
-				if ((cima == true && baixo == true) || (esquerda == true && direita == true) ||
-					(cima == true && esquerda == true) || (cima == true && direita == true) ||
-					(baixo == true && esquerda == true) || (baixo == true && direita == true)){
-					P1x = 0;
-				}
-				if(cima == false && baixo == false && esquerda == false && direita == false){
-					P1x = 0;
+
+				FrameTime = SDL_GetTicks() - FrameStart;
+				if (FrameDelay > FrameTime){
+					SDL_Delay(FrameDelay - FrameTime);
 				}
 			}
-			SDL_Delay(20);
-		}
 	}
     //Destruindo geral
     SDL_DestroyWindow(Janela);
