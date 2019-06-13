@@ -1,4 +1,4 @@
-// gcc -o Jogo Jogo.c -lSDL2 -lSDL2_image -lSDL2_mixer  <-- compilar
+// gcc -o main main.c -lSDL2 -lSDL2_image -lSDL2_mixer  <-- compilar
 
 #include <stdio.h>
 #include <SDL2/SDL.h>
@@ -6,6 +6,9 @@
 #include <stdbool.h>
 #include <SDL2/SDL_mixer.h>
 
+#define LIMITE 4
+#define JANELA_w 1080
+#define JANELA_h 640
 #define LARGURA 3200
 #define ALTURA 1800
 #define PLAYER_w 31 // Largura da sprite
@@ -23,9 +26,10 @@ SDL_Texture* Textura_Fundo;
 //SDL_Surface *surface
 
 SDL_Rect sPlayer = {0, 0, PLAYER_w, PLAYER_h}; //Sprites Player
-SDL_Rect dPlayer = {640, 360, 75, 90}; //Movimentação Player
+SDL_Rect dPlayer = {JANELA_w /2, JANELA_h /2, 65, 80}; //Movimentação Player
 SDL_Rect sMapa = {0, 0, 320, 180}; //Movimento do mapa
 
+int Limitador = 0;
 bool esquerda = false, direita = false, cima = false, baixo = false;
 
 bool Inicio();
@@ -35,10 +39,8 @@ bool XPlayer();
 void Andar_Tecla();
 void Andar_Logic();
 void Musicas_Tops();
-//bool Colidir_Janela();
 void Obter_Fundo ();
-void Rolamento_Tela();
-
+void Animacao_Logic();
 
 int main (){
 
@@ -56,7 +58,7 @@ int main (){
 	else{
 		Render_Janela ();
 		Musicas_Tops();
-		const int FPS = 20;                    // // // // // //
+		const int FPS = 24;                    // // // // // //
 		const int FrameDelay = 1000/FPS;      //  Frame Per  //
 		unsigned long FrameStart;            //    Second   //
 		int FrameTime;                      // // // // // //
@@ -75,9 +77,9 @@ int main (){
 					}
 
 					Andar_Tecla ();
-					//Colidir_Janela();
-					Rolamento_Tela();
 					Andar_Logic ();
+					Animacao_Logic();
+					Limitador++;
 
 				}
 			FrameTime = SDL_GetTicks() - FrameStart;
@@ -97,8 +99,7 @@ int main (){
     SDL_DestroyRenderer(render); 
     SDL_DestroyTexture(PlayerTexture);
     SDL_DestroyTexture(Textura_Fundo);
-
-
+    
     //Fim//
     SDL_Quit();
     return 0;
@@ -114,7 +115,7 @@ bool Inicio (){
 		success = false;
 	}
 	
-	else { Janela = SDL_CreateWindow ("Jogo 100% boladaço", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_RESIZABLE); }
+	else { Janela = SDL_CreateWindow ("Jogo 100% boladaço", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, JANELA_w, JANELA_h, SDL_WINDOW_RESIZABLE); }
 
 	return success;
 }
@@ -153,22 +154,6 @@ void Musicas_Tops(){
 	Mix_PlayChannel(1, Musica, -1); //Canal que vai tocar, musica que será tocada, quantidade de vezes que será tocada
 }
 
-/*bool Colidir_Janela (void){ 	//Colisão com Janela      
-     
-    if(dPlayer.y + dPlayer.h >= ALTURA){
-        baixo = false;
-    }
-    if(dPlayer.y <= 0){
-    	cima = false;
-    }
-    if(dPlayer.x + dPlayer.w >= LARGURA){
-    	direita = false;
-    }
-    if(dPlayer.x  <= 0){
-    	esquerda = false;
-    }
-}*/
-
 void Andar_Tecla(){
 	
 	if (event.type == SDL_KEYDOWN){ //Usuário pressionou  uma tecla
@@ -196,38 +181,54 @@ void Andar_Tecla(){
 	}
 }
 
-void Andar_Logic(){	//Parte de Lógica
+void Animacao_Logic(){	//Parte de Lógica
 
 	if (baixo == true && direita == false && esquerda == false){
 		sPlayer.y = PLAYER_h * 0;
-		if(sPlayer.x < PLAYER_w * 3){
+		if(sPlayer.x < PLAYER_w * 3 && Limitador >= LIMITE){
 			sPlayer.x += PLAYER_w;
+			Limitador = 0;
 		}
-		else{sPlayer.x = 0;}
+		else if(sPlayer.x >= PLAYER_w * 3 && Limitador >= LIMITE){
+			sPlayer.x = 0;
+			Limitador = 0;
+		}
 	}
 
 	if (cima == true && direita == false && esquerda == false){
 		sPlayer.y = PLAYER_h;
-		if(sPlayer.x < PLAYER_w * 3){
+		if(sPlayer.x < PLAYER_w * 3 && Limitador >= LIMITE){
 			sPlayer.x += PLAYER_w;
+			Limitador = 0;
 		}
-		else{sPlayer.x = 0;}
+		else if(sPlayer.x >= PLAYER_w * 3 && Limitador >= LIMITE){
+			sPlayer.x = 0;
+			Limitador = 0;
+		}
 	}
 
 	if (esquerda == true && cima == false && baixo == false){
 		sPlayer.y = PLAYER_h * 2;
-		if(sPlayer.x < PLAYER_w * 3){
+		if(sPlayer.x < PLAYER_w * 3 && Limitador >= LIMITE){
 			sPlayer.x += PLAYER_w;
+			Limitador = 0;
 		}
-		else{sPlayer.x = 0;}
+		else if(sPlayer.x >= PLAYER_w * 3 && Limitador >= LIMITE){
+			sPlayer.x = 0;
+			Limitador = 0;
+		}
 	}
 
 	if (direita == true && cima == false && baixo == false){
 		sPlayer.y = PLAYER_h * 3;
-		if(sPlayer.x < PLAYER_w * 3){
+		if(sPlayer.x < PLAYER_w * 3 && Limitador >= LIMITE){
 			sPlayer.x += PLAYER_w;
+			Limitador = 0;
 		}
-		else{sPlayer.x = 0;}
+		else if(sPlayer.x >= PLAYER_w * 3 && Limitador >= LIMITE){
+			sPlayer.x = 0;
+			Limitador = 0;
+		}
 	}
 
 	if(cima == false && baixo == false && esquerda == false && direita == false)
@@ -238,33 +239,33 @@ void Andar_Logic(){	//Parte de Lógica
 	}
 }
 
-void Rolamento_Tela(){
+void Andar_Logic(){
 
 	if (baixo == true && direita == false && esquerda == false){
-		if(sMapa.y + sMapa.h + 2 <= ALTURA) // colisão da tela
+		if(sMapa.y + sMapa.h + 2 <= ALTURA && dPlayer.y + dPlayer.h >= JANELA_h/2) // colisão da tela
 			sMapa.y += 2; // O mapa anda e o player fica parado, so movimenta a sprite
-		else
-			dPlayer.y += 2; //Quando o mapa chega no fim o player anda
+		else if (dPlayer.y + dPlayer.h + 4 <= JANELA_h)
+			dPlayer.y += 4; //Quando o mapa chega no fim o player anda
 	}
 
 	if (cima == true && direita == false && esquerda == false){
-		if(sMapa.y - 2 >= 0)
+		if(sMapa.y - 2 >= 0 && dPlayer.y <= JANELA_h/2)
 			sMapa.y -= 2;
-		else
-			dPlayer.y -= 2;
+		else if (dPlayer.y - 4 >= 0)
+			dPlayer.y -= 4;
 	}
 
 	if (direita == true && cima == false && baixo == false){
-		if(sMapa.x + sMapa.w + 2 <= LARGURA)
+		if(sMapa.x + sMapa.w + 2 <= LARGURA && dPlayer.x + dPlayer.w >= JANELA_w/2)
 			sMapa.x += 2;
-		else
-			dPlayer.x += 2;
+		else if (dPlayer.x + dPlayer.w + 4 <= JANELA_w)
+			dPlayer.x += 4;
 	}
 
 	if (esquerda == true && cima == false && baixo == false){
-		if(sMapa.x - 2 >= 0)
+		if(sMapa.x - 2 >= 0 && dPlayer.x <= JANELA_w/2)
 			sMapa.x -= 2;
-		else
-			dPlayer.x -= 2;
+		else if (dPlayer.x - 4 >= 0)
+			dPlayer.x -= 4;
 	}	
 }
