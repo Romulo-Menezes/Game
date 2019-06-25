@@ -9,10 +9,11 @@
 #define LIMITE 4
 #define JANELA_w 1080
 #define JANELA_h 640
-#define LARGURA 3200
-#define ALTURA 1800
+#define LARGURA 4320
+#define ALTURA 2560
 #define PLAYER_w 31 // Largura da sprite
 #define PLAYER_h 46 // Altura da sprite
+int SPEED = 2;
 
 SDL_Renderer* render;
 SDL_Event event;
@@ -27,10 +28,18 @@ SDL_Texture* Textura_Fundo;
 
 SDL_Rect sPlayer = {0, 0, PLAYER_w, PLAYER_h}; //Sprites Player
 SDL_Rect dPlayer = {JANELA_w /2, JANELA_h /2, 65, 80}; //Movimentação Player
-SDL_Rect sMapa = {0, 0, 320, 180}; //Movimento do mapa
+SDL_Rect sCamera = {426, 930, 270, 160}; //Movimento da camera
+SDL_Rect dCamera = {0, 0, 1080, 640};
 
 int Limitador = 0;
 bool esquerda = false, direita = false, cima = false, baixo = false;
+
+typedef struct
+{
+	int Px;
+	int Py;	
+} Jogador;
+Jogador player;
 
 bool Inicio();
 bool Render_Janela ();
@@ -40,10 +49,10 @@ void Andar_Tecla();
 void Andar_Logic();
 void Musicas_Tops();
 void Obter_Fundo ();
+void Colisao();
 void Animacao_Logic();
 
 int main (){
-
 	SDL_Init (SDL_INIT_EVERYTHING);
 
 	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
@@ -77,8 +86,10 @@ int main (){
 					}
 
 					Andar_Tecla ();
+					Colisao();
 					Andar_Logic ();
 					Animacao_Logic();
+					printf("Player x: %d Player y: %d\n", player.Px, player.Py);
 					Limitador++;
 
 				}
@@ -135,7 +146,7 @@ void Obter_Fundo (void){ //Imagem de fundo
 bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na tela
 
 	SDL_RenderClear(render);
-	SDL_RenderCopy (render, Textura_Fundo, &sMapa, NULL); // Onde será apresentado, textura do que será apresentado, posição, posição
+	SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
 	SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
 	SDL_RenderPresent(render);
 }
@@ -242,30 +253,60 @@ void Animacao_Logic(){	//Parte de Lógica
 void Andar_Logic(){
 
 	if (baixo == true && direita == false && esquerda == false){
-		if(sMapa.y + sMapa.h + 2 <= ALTURA && dPlayer.y + dPlayer.h >= JANELA_h/2) // colisão da tela
-			sMapa.y += 2; // O mapa anda e o player fica parado, so movimenta a sprite
-		else if (dPlayer.y + dPlayer.h + 4 <= JANELA_h)
-			dPlayer.y += 4; //Quando o mapa chega no fim o player anda
+		if(sCamera.y + sCamera.h + SPEED <= ALTURA && dPlayer.y + dPlayer.h >= JANELA_h/2) // colisão da tela
+			sCamera.y += SPEED; // O mapa anda e o player fica parado, so movimenta a sprite
+		else if (dPlayer.y + dPlayer.h + SPEED*2 <= JANELA_h)
+			dPlayer.y += SPEED*2; //Quando o mapa chega no fim o player anda
 	}
 
 	if (cima == true && direita == false && esquerda == false){
-		if(sMapa.y - 2 >= 0 && dPlayer.y <= JANELA_h/2)
-			sMapa.y -= 2;
+		if(sCamera.y - SPEED >= 0 && dPlayer.y <= JANELA_h/2)
+			sCamera.y -= SPEED;
 		else if (dPlayer.y - 4 >= 0)
 			dPlayer.y -= 4;
 	}
 
 	if (direita == true && cima == false && baixo == false){
-		if(sMapa.x + sMapa.w + 2 <= LARGURA && dPlayer.x + dPlayer.w >= JANELA_w/2)
-			sMapa.x += 2;
-		else if (dPlayer.x + dPlayer.w + 4 <= JANELA_w)
-			dPlayer.x += 4;
+		if(sCamera.x + sCamera.w + SPEED <= LARGURA && dPlayer.x + dPlayer.w >= JANELA_w/2)
+			sCamera.x += SPEED;
+		else if (dPlayer.x + dPlayer.w + SPEED*2 <= JANELA_w)
+			dPlayer.x += SPEED*2;
 	}
 
 	if (esquerda == true && cima == false && baixo == false){
-		if(sMapa.x - 2 >= 0 && dPlayer.x <= JANELA_w/2)
-			sMapa.x -= 2;
-		else if (dPlayer.x - 4 >= 0)
-			dPlayer.x -= 4;
-	}	
+		if(sCamera.x - SPEED >= 0 && dPlayer.x <= JANELA_w/2)
+			sCamera.x -= SPEED;
+		else if (dPlayer.x - SPEED*2 >= 0)
+			dPlayer.x -= SPEED*2;
+	}
+}
+
+void Colisao(){
+
+	player.Px = dPlayer.x + sCamera.x;  //Usar isso para fazer a colisão//
+	player.Py = dPlayer.y + sCamera.y; /// // // // // // // // // // ///
+
+	if(direita == true){
+
+		if(player.Px + SPEED >= 1020 && player.Px <= 1068 && player.Py >= 1240 && player.Py <= 1256){
+			SPEED = 0;
+		}
+	}
+	else if(cima == true){
+		if(player.Py - SPEED <= 1246 && player.Py >= 1190 && player.Px >= 884 && player.Px <= 1246){
+			SPEED = 0;
+		}
+		else if(player.Py - SPEED <= 1258 && player.Py >= 1248 && player.Px >= 1020 && player.Px <= 1068){
+			SPEED = 0;
+		}
+	}
+	else if(esquerda == true){
+		if (0)
+		{
+			/* code */
+		}
+	}
+	else
+		SPEED = 2;
+
 }
