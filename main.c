@@ -9,8 +9,8 @@
 #define LIMITE 4
 #define JANELA_w 1080
 #define JANELA_h 640
-#define LARGURA 4320
-#define ALTURA 2560
+#define LARGURA 3264
+#define ALTURA 1920
 #define PLAYER_w 31 // Largura da sprite
 #define PLAYER_h 46 // Altura da sprite
 int SPEED = 2;
@@ -28,7 +28,7 @@ SDL_Texture* Textura_Fundo;
 
 SDL_Rect sPlayer = {0, 0, PLAYER_w, PLAYER_h}; //Sprites Player
 SDL_Rect dPlayer = {JANELA_w /2, JANELA_h /2, 65, 80}; //Movimentação Player
-SDL_Rect sCamera = {426, 930, 270, 160}; //Movimento da camera
+SDL_Rect sCamera = {426, 930, 272, 160}; //Movimento da camera
 SDL_Rect dCamera = {0, 0, 1080, 640};
 
 int Limitador = 0;
@@ -281,29 +281,34 @@ void Andar_Logic(){
 	}
 }
 
-void Colisao(){
+void Colisao(){ // tá dando merda isso
 
-	player.Px = dPlayer.x + sCamera.x;  //Usar isso para fazer a colisão//
+	player.Px = dPlayer.x + sCamera.x;  //tá dando merda por causa disso//
 	player.Py = dPlayer.y + sCamera.y; /// // // // // // // // // // ///
 
 	if(direita == true){
 
-		if(player.Px + SPEED >= 1020 && player.Px <= 1068 && player.Py >= 1240 && player.Py <= 1256){
+		if(player.Px + SPEED >= 1020 && player.Px <= 1070 && player.Py >= 1240 && player.Py <= 1258){
 			SPEED = 0;
 		}
+		if(player.Px + SPEED >= 870 && player.Px <= 872 && player.Py >= 1190 && player.Py <= 1246){
+			SPEED = 0;
+		}		
 	}
 	else if(cima == true){
-		if(player.Py - SPEED <= 1246 && player.Py >= 1190 && player.Px >= 884 && player.Px <= 1246){
+		if(player.Py - SPEED <= 1246 && player.Py >= 1190 && player.Px >= 870 && player.Px <= 1236){
 			SPEED = 0;
 		}
-		else if(player.Py - SPEED <= 1258 && player.Py >= 1248 && player.Px >= 1020 && player.Px <= 1068){
+		else if(player.Py - SPEED <= 1260 && player.Py >= 1248 && player.Px >= 1020 && player.Px <= 1070){
 			SPEED = 0;
 		}
 	}
 	else if(esquerda == true){
-		if (0)
-		{
-			/* code */
+		if(player.Px - SPEED <= 1070 && player.Px >= 1020 && player.Py >= 1240 && player.Py <= 1258){
+			SPEED = 0;
+		}
+		else if(player.Px - SPEED <= 530 && player.Px >= 0 && player.Py >= 424 && player.Py <= 1378){
+			SPEED = 0;
 		}
 	}
 	else
