@@ -12,14 +12,16 @@
 #define LIMITE 4
 #define JANELA_W 800
 #define JANELA_H 600
-#define LARGURA 3264
-#define ALTURA 1920
 #define PLAYER_W 31 // Largura da sprite
 #define PLAYER_H 46 // Altura da sprite
 
 //VARIÁVEIS DO MENU
 
 int seletor = 0, menu = 1, how = 1, rank = 1, cred = 1;
+
+int Muda_Mapa = 1;
+int LARGURA = 3264;
+int ALTURA = 1920;
 
 int SPEED = 2;
 
@@ -38,12 +40,18 @@ SDL_Event event;
 //Player
 SDL_Surface* PlayerSurface;
 SDL_Texture* PlayerTexture;
+SDL_Surface* EsqueletoSurface;
+SDL_Texture* EsqueletoTexture;
 
 //Fundo
 SDL_Surface* Background;
 SDL_Surface* Background_Up;
+SDL_Surface* CavernaS;
+SDL_Surface* Sala_FinalS;
 SDL_Texture* Textura_Fundo;
 SDL_Texture* Layer_Up_Fundo;
+SDL_Texture* Caverna;
+SDL_Texture* Sala_Final;
 
 //Musicas
 Mix_Chunk* Musica_1;
@@ -62,10 +70,10 @@ SDL_Texture* Text_Control;
 SDL_Texture* Text_Ranking;
 SDL_Texture* Text_Credits;
 
-
-
+SDL_Rect sEsqueleto = {0, 0, PLAYER_W, PLAYER_H};
+SDL_Rect dEsqueleto = {-100, -100, 55, 75};
 SDL_Rect sPlayer = {0, 0, PLAYER_W, PLAYER_H}; //Sprites Player
-SDL_Rect dPlayer = {JANELA_W /2, JANELA_H /2, 55, 75}; //Movimentação Player
+SDL_Rect dPlayer = {JANELA_W/2, JANELA_H/2, 55, 75}; //Movimentação Player
 
 SDL_Rect sCamera = {424, 930, 272, 160}; //Movimento da câmera
 SDL_Rect dCamera = {0, 0, 800, 600};
@@ -81,7 +89,8 @@ typedef struct
 	int Py;	
 } Jogador;
 
-Jogador player;
+
+Jogador player, mob;
 
 bool Inicio();
 bool Render_Janela ();
@@ -112,6 +121,12 @@ int main (){
 
 	player.Px = dPlayer.x + sCamera.x;
 	player.Py = dPlayer.y + sCamera.y;
+
+	mob.Px = 908;
+	mob.Py = 408;
+
+	dEsqueleto.w = mob.Px - sCamera.x;
+	dEsqueleto.h = mob.Py - sCamera.y;
 
 	if (!Inicio()){
 
@@ -349,12 +364,42 @@ void Jogo_Inteiro (){
 				Play = false;
 			}
 
+			if(player.Px >= 3136 && player.Px <= 3168 && player.Py == 1348){
+
+				if (event.type == SDL_KEYDOWN){
+
+					if (event.key.keysym.sym == SDLK_e){
+						Muda_Mapa = 2;
+						ALTURA = 1200;
+						LARGURA = 800;
+						dPlayer.x = 400; dPlayer.y = 300;
+						sCamera.x = 184; sCamera.y = 890; sCamera.w = 400; sCamera.h = 300;
+						player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
+						SPEED = 2;					
+					}
+				}
+			}
+
+			if(player.Px >= 542 && player.Px <= 630 && player.Py == 1194){
+				if(event.type == SDL_KEYDOWN){
+					if(event.key.keysym.sym == SDLK_e){
+						Muda_Mapa = 1;
+						ALTURA = 3264;
+						LARGURA = 1920;
+						dPlayer.x = 400; dPlayer.y = 300;
+						sCamera.x = 2752; sCamera.y = 1048; sCamera.w = 272; sCamera.h = 160;
+						player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
+						SPEED =2;
+					}
+				}
+			}
+
 			Andar_Tecla ();
 			Colisao_Fixa();
 			Andar_Logic ();
 			Animation_Logic();
 			
-			printf("Player x: %d Player y: %d\n", player.Px, player.Py);
+			printf("Player x: %d Player y: %d\n", sCamera.x, sCamera.y);
 			Limitador++;
 
 		}
@@ -420,14 +465,25 @@ void Obter_Fundo (void){ //Imagem de fundo
 	Background_Up = IMG_Load("Resources/Image/LayerUpMapa.png");
 	Textura_Fundo = SDL_CreateTextureFromSurface (render, Background);
 	Layer_Up_Fundo = SDL_CreateTextureFromSurface (render, Background_Up);
+	CavernaS = IMG_Load("Resources/Image/Caverna_Mapa.png");
+	Sala_FinalS = IMG_Load("Resources/Image/Sala_Final.png");
+	Caverna = SDL_CreateTextureFromSurface(render, CavernaS);
+	Sala_Final = SDL_CreateTextureFromSurface(render, Sala_FinalS);
 }
 
 bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na tela
 
 	SDL_RenderClear(render);
-	SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
-	SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
-	SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
+	if(Muda_Mapa == 1){
+		SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
+		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
+		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
+		SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
+	}
+	if(Muda_Mapa == 2){
+		SDL_RenderCopy(render,Caverna, &sCamera, &dCamera);
+		SDL_RenderCopy(render, PlayerTexture, &sPlayer, &dPlayer);
+	}
 	SDL_RenderPresent(render);
 }
 
@@ -435,6 +491,8 @@ bool XPlayer (void){
 
 	PlayerSurface = IMG_Load("Resources/Sprites/Player.png");
 	PlayerTexture = SDL_CreateTextureFromSurface(render, PlayerSurface);
+	EsqueletoSurface = IMG_Load("Resources/Sprites/Esqueleto.png");
+	EsqueletoTexture = SDL_CreateTextureFromSurface(render, EsqueletoSurface);
 }
 
 void Musicas_Tops(){
@@ -609,13 +667,26 @@ void Andar_Logic(){
 
 void Colisao_Fixa(){
 
-	int Posx1, Posx2, Posy1, Posy2, i;
+	int Posx1, Posx2, Posy1, Posy2, i, vezes = 0;
 
 	if(cima == true){
 
-		FILE *C_top = fopen("Resources/Collision/C_top.txt","r");
+		FILE *C_top;
 
-		for(i = 0; i < 26; i++){
+		if(Muda_Mapa == 1){
+
+			C_top = fopen("Resources/Collision/C_top1.txt","r");
+
+			vezes = 26;
+		}
+		else if(Muda_Mapa == 2){
+
+			C_top = fopen("Resources/Collision/C_top2.txt","r");
+
+			vezes = 10;
+		}
+
+		for(i = 0; i < vezes; i++){
 
 			fscanf(C_top, "%d %d %d", &Posy1, &Posx1, &Posx2);
 
@@ -632,9 +703,22 @@ void Colisao_Fixa(){
 	}
 	else if (esquerda == true){
 
-		FILE *C_left = fopen("Resources/Collision/C_left.txt","r");	
+		FILE *C_left;
 
-		for(i = 0; i < 23; i++){
+		if(Muda_Mapa == 1){
+
+			C_left = fopen("Resources/Collision/C_left1.txt","r");
+
+			vezes = 23;
+		}
+		else if(Muda_Mapa == 2){
+
+			C_left = fopen("Resources/Collision/C_left2.txt","r");
+
+			vezes = 9;
+		}
+
+		for(i = 0; i < vezes; i++){
 
 			fscanf(C_left, "%d %d %d", &Posx1, &Posy1, &Posy2);
 
@@ -651,9 +735,22 @@ void Colisao_Fixa(){
 	}
 	else if (direita == true){
 
-		FILE *C_right = fopen("Resources/Collision/C_right.txt","r");
+		FILE *C_right;
 
-		for(i = 0; i < 20; i++){
+		if(Muda_Mapa == 1){
+
+			C_right = fopen("Resources/Collision/C_right1.txt","r");
+
+			vezes = 20;
+		}
+		else if(Muda_Mapa == 2){
+
+			C_right = fopen("Resources/Collision/C_right2.txt","r");
+
+			vezes = 7;
+		}
+
+		for(i = 0; i < vezes; i++){
 
 			fscanf(C_right, "%d %d %d", &Posx1, &Posy1, &Posy2);
 
@@ -670,9 +767,22 @@ void Colisao_Fixa(){
 	}
 	else if (baixo == true){
 
-		FILE *C_down = fopen("Resources/Collision/C_down.txt","r");
+		FILE *C_down;
 
-			for(i = 0; i < 16; i++){
+		if (Muda_Mapa == 1){
+
+			C_down = fopen("Resources/Collision/C_down1.txt","r");
+
+			vezes = 16;
+		}
+		else if (Muda_Mapa == 2){
+
+			C_down = fopen("Resources/Collision/C_down2.txt","r");
+
+			vezes = 11;
+		}
+
+		for(i = 0; i < vezes; i++){
 
 			fscanf(C_down, "%d %d %d", &Posy1, &Posx1, &Posx2);
 
