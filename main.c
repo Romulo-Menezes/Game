@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <SDL2/SDL_mixer.h>
 
-#define LIMITE 4
 #define JANELA_W 800
 #define JANELA_H 600
 #define PLAYER_W 31 // Largura da sprite
@@ -22,6 +21,7 @@ int seletor = 0, menu = 1, how = 1, rank = 1, cred = 1;
 int Muda_Mapa = 1;
 int LARGURA = 3264;
 int ALTURA = 1920;
+int LIMITE = 4;
 
 int SPEED = 2;
 
@@ -30,6 +30,7 @@ bool Play = true;
 int Limitador = 0;
 
 bool esquerda = false, direita = false, cima = false, baixo = false;
+bool colidiu = false;
 
 //Janela
 SDL_Window* Janela = NULL;
@@ -122,11 +123,9 @@ int main (){
 	player.Px = dPlayer.x + sCamera.x;
 	player.Py = dPlayer.y + sCamera.y;
 
-	mob.Px = 908;
-	mob.Py = 408;
 
-	dEsqueleto.w = mob.Px - sCamera.x;
-	dEsqueleto.h = mob.Py - sCamera.y;
+	dEsqueleto.x = 0;
+	dEsqueleto.y = 0;
 
 	if (!Inicio()){
 
@@ -148,7 +147,7 @@ bool Inicio (){
 		success = false;
 	}
 	
-	else { Janela = SDL_CreateWindow ("Jogo 100% boladaço", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, JANELA_W, JANELA_H, SDL_WINDOW_RESIZABLE); }
+	else { Janela = SDL_CreateWindow ("Jogo 100% Boladaço", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, JANELA_W, JANELA_H, SDL_WINDOW_RESIZABLE); }
 
 	return success;
 }
@@ -345,10 +344,10 @@ void Credits (){
 void Jogo_Inteiro (){
 
 	Musicas_Tops();
-	const int FPS = 24;                    // // // // // //
-	const int FrameDelay = 1000/FPS;      //  Frame Per  //
+	const float FPS = 24;                    // // // // // //
+	const float FrameDelay = 1000/FPS;      //  Frame Per  //
 	unsigned long FrameStart;            //    Second   //
-	int FrameTime;                      // // // // // //
+	float FrameTime;                      // // // // // //
 	XPlayer();
 	Obter_Fundo();
 
@@ -364,7 +363,7 @@ void Jogo_Inteiro (){
 				Play = false;
 			}
 
-			if(player.Px >= 3136 && player.Px <= 3168 && player.Py == 1348){
+			if(Muda_Mapa == 1 && player.Px >= 3136 && player.Px <= 3168 && player.Py == 1348){
 
 				if (event.type == SDL_KEYDOWN){
 
@@ -372,7 +371,6 @@ void Jogo_Inteiro (){
 						Muda_Mapa = 2;
 						ALTURA = 1200;
 						LARGURA = 800;
-						dPlayer.x = 400; dPlayer.y = 300;
 						sCamera.x = 184; sCamera.y = 890; sCamera.w = 400; sCamera.h = 300;
 						player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
 						SPEED = 2;					
@@ -380,13 +378,12 @@ void Jogo_Inteiro (){
 				}
 			}
 
-			if(player.Px >= 542 && player.Px <= 630 && player.Py == 1194){
+			if(Muda_Mapa == 2 && player.Px >= 542 && player.Px <= 630 && player.Py == 1194){
 				if(event.type == SDL_KEYDOWN){
 					if(event.key.keysym.sym == SDLK_e){
 						Muda_Mapa = 1;
-						ALTURA = 3264;
-						LARGURA = 1920;
-						dPlayer.x = 400; dPlayer.y = 300;
+						ALTURA = 1920;
+						LARGURA = 3264;
 						sCamera.x = 2752; sCamera.y = 1048; sCamera.w = 272; sCamera.h = 160;
 						player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
 						SPEED =2;
@@ -397,9 +394,10 @@ void Jogo_Inteiro (){
 			Andar_Tecla ();
 			Colisao_Fixa();
 			Andar_Logic ();
-			Animation_Logic();
+			if (colidiu == false)
+				Animation_Logic();
 			
-			printf("Player x: %d Player y: %d\n", sCamera.x, sCamera.y);
+			//printf("Player x: %d Player y: %d\n", sCamera.x, sCamera.y);
 			Limitador++;
 
 		}
@@ -480,7 +478,7 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
 		SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
 	}
-	if(Muda_Mapa == 2){
+	else if(Muda_Mapa == 2){
 		SDL_RenderCopy(render,Caverna, &sCamera, &dCamera);
 		SDL_RenderCopy(render, PlayerTexture, &sPlayer, &dPlayer);
 	}
@@ -531,11 +529,11 @@ void Andar_Tecla(){
 
 		if (event.key.keysym.sym == SDLK_UP)
 			cima = true;
-		if (event.key.keysym.sym == SDLK_DOWN)
+		 else if (event.key.keysym.sym == SDLK_DOWN)
 			baixo = true;
-		if (event.key.keysym.sym == SDLK_LEFT)
+		else if (event.key.keysym.sym == SDLK_LEFT)
 			esquerda = true;
-		if (event.key.keysym.sym == SDLK_RIGHT)
+		else if (event.key.keysym.sym == SDLK_RIGHT)
 			direita = true;	
 	}
 	
@@ -543,11 +541,11 @@ void Andar_Tecla(){
 
 		if (event.key.keysym.sym == SDLK_UP)
 			cima = false;
-		if (event.key.keysym.sym == SDLK_DOWN)
+		else if (event.key.keysym.sym == SDLK_DOWN)
 			baixo = false;
-		if (event.key.keysym.sym == SDLK_LEFT)
+		else if (event.key.keysym.sym == SDLK_LEFT)
 			esquerda = false;
-		if (event.key.keysym.sym == SDLK_RIGHT)
+		else if (event.key.keysym.sym == SDLK_RIGHT)
 			direita = false;
 	}
 }
@@ -692,9 +690,11 @@ void Colisao_Fixa(){
 
 			if(player.Py == Posy1 && player.Px < Posx1 && player.Px > Posx2){
 				SPEED = 0;
+				colidiu = true;
 				break;
 			}
 			else{
+				colidiu = false;
 				SPEED = 2;
 			}
 		}
@@ -724,9 +724,11 @@ void Colisao_Fixa(){
 
 			if(player.Px == Posx1 && player.Py < Posy1 && player.Py > Posy2){
 				SPEED = 0;
+				colidiu = true;
 				break;
 			}
 			else{
+				colidiu = false;
 				SPEED = 2;
 			}
 		}
@@ -756,9 +758,11 @@ void Colisao_Fixa(){
 
 			if(player.Px == Posx1 && player.Py < Posy1 && player.Py > Posy2){
 				SPEED = 0;
+				colidiu = true;
 				break;
 			}
 			else{
+				colidiu = false;
 				SPEED = 2;
 			}
 		}
@@ -788,9 +792,11 @@ void Colisao_Fixa(){
 
 			if(player.Py == Posy1 && player.Px < Posx1 && player.Px > Posx2){
 				SPEED = 0;
+				colidiu = true;
 				break;
 			}
 			else{
+				colidiu = false;
 				SPEED = 2;
 			}
 		}
