@@ -73,6 +73,11 @@ SDL_Texture* Text_Credits;
 
 SDL_Rect sEsqueleto = {0, 0, PLAYER_W, PLAYER_H};
 SDL_Rect dEsqueleto = {JANELA_W, JANELA_H, 55, 75};
+SDL_Rect dMob1 = {JANELA_W, JANELA_H, 55, 75};
+SDL_Rect dMob2 = {JANELA_W, JANELA_H, 55, 75};
+SDL_Rect dMob3 = {JANELA_W, JANELA_H, 55, 75};
+SDL_Rect dMob4 = {JANELA_W, JANELA_H, 55, 75};
+SDL_Rect dMob5 = {JANELA_W, JANELA_H, 55, 75};
 SDL_Rect sPlayer = {0, 0, PLAYER_W, PLAYER_H}; //Sprites Player
 SDL_Rect dPlayer = {JANELA_W/2, JANELA_H/2, 55, 75}; //Movimentação Player
 
@@ -82,6 +87,7 @@ SDL_Rect dCamera = {0, 0, 800, 600};
 
 SDL_Rect sBox = {0, 0, 228, 38}; // Sprites da Caixa
 SDL_Rect dBox = {285, 320, 228, 38}; // Posição X, Posição Y, Tamanho // OBS: SE MEXER AQUI TEM QUE MEXER NO SWITCH DO SELETOR TBM
+
 
 
 typedef struct
@@ -401,7 +407,7 @@ void Jogo_Inteiro (){
 			if (colidiu == false)
 				Animation_Logic();
 			
-			//printf("\ncamera x: %d camera y: %d\n camera w: %d camera h: %d\n\n", sCamera.x, sCamera.y, sCamera.x+sCamera.w, sCamera.y+sCamera.h);
+			printf("\ncamera x: %d camera y: %d\ncamera w: %d camera h: %d\n\n", sCamera.x, sCamera.y, sCamera.x+sCamera.w, sCamera.y+sCamera.h);
 
 			//printf("Esqueleto x: %d Esqueleto y: %d\n\n", dEsqueleto.x, dEsqueleto.y);
 			Limitador++;
@@ -483,6 +489,11 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 		SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
 		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
+		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob1);
+		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob2);
+		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob3);
+		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob4);
+		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob5);
 		SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
 	}
 	else if(Muda_Mapa == 2){
@@ -828,9 +839,103 @@ void Inimigo(){
 		dEsqueleto.x = JANELA_W;
 		dEsqueleto.y = JANELA_H/2;
 	}
-	else if (sCamera.x > 680){
+	else if (sCamera.x > 650){
 		dEsqueleto.x = -10 - dEsqueleto.w;
 		dEsqueleto.y = JANELA_H/2;		
 	}
 
+	if(sCamera.x >= 854 && sCamera.x +sCamera.w <= 1398 && sCamera.y >= 124 && sCamera.y + sCamera.h <= 444){
+		if (direita == true)
+			dMob1.x -= SPEED*3;
+		if (esquerda == true)
+			dMob1.x += SPEED*3;
+		if(cima == true)
+			dMob1.y += SPEED*4;
+		if(baixo == true)
+			dMob1.y -= SPEED*4;
+	}
+	else if (sCamera.x < 854){
+		dMob1.x = JANELA_W;
+		dMob1.y = JANELA_H/2;
+	}
+	else if (sCamera.x > 1000){
+		dMob1.x = -10 - dMob1.w;
+		dMob1.y = JANELA_H/2;	
+	}
+
+	/*if(sCamera.x >= 1360 && sCamera.x +sCamera.w <= 1800 && sCamera.y >= 804 && sCamera.y + sCamera.h <= 1024){
+		if (direita == true)
+			dMob2.x -= SPEED*3;
+		if (esquerda == true)
+			dMob2.x += SPEED*3;
+		if(cima == true)
+			dMob2.y += SPEED*4;
+		if(baixo == true)
+			dMob2.y -= SPEED*4;
+	}
+	else if (sCamera.x < 1360){
+		dMob2.x = JANELA_W;
+		dMob2.y = JANELA_H/2;
+	}
+	else if (sCamera.x > 1600){
+		dMob2.x = -10 - dMob1.w;
+		dMob2.y = JANELA_H/2;		
+	}*/
+
+	if(sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
+		if (direita == true)
+			dMob3.x -= SPEED*3;
+		if (esquerda == true)
+			dMob3.x += SPEED*3;
+		if(cima == true)
+			dMob3.y += SPEED*4;
+		if(baixo == true)
+			dMob3.y -= SPEED*4;
+	}
+	else if (sCamera.x < 2470){
+		dMob3.x = JANELA_W;
+		dMob3.y = JANELA_H/2 + 150;
+	}
+	else if (sCamera.x > 3182){
+		dMob3.x = -10 - dMob1.w;
+		dMob3.y = JANELA_H/2 + 150;		
+	}
+
+	if(sCamera.x >= 228  && sCamera.x +sCamera.w <= 772 && sCamera.y >= 1584 && sCamera.y + sCamera.h <= 1956){
+		if (direita == true)
+			dMob4.x -= SPEED*3;
+		if (esquerda == true)
+			dMob4.x += SPEED*3;
+		if(cima == true)
+			dMob4.y += SPEED*4;
+		if(baixo == true)
+			dMob4.y -= SPEED*4;
+	}
+	else if (sCamera.x < 228){
+		dMob4.x = JANELA_W;
+		dMob4.y = JANELA_H/2;
+	}
+	else if (sCamera.x > 550){
+		dMob4.x = -10 - dMob1.w;
+		dMob4.y = JANELA_H/2;	
+	}
+
+	if(sCamera.x >= 2182  && sCamera.x +sCamera.w <= 2726 && sCamera.y >= 1582 && sCamera.y + sCamera.h <= 1920){
+		if (direita == true)
+			dMob5.x -= SPEED*3;
+		if (esquerda == true)
+			dMob5.x += SPEED*3;
+		if(cima == true)
+			dMob5.y += SPEED*4;
+		if(baixo == true)
+			dMob5.y -= SPEED*4;;
+	}
+	else if (sCamera.x < 2182){
+		dMob5.x = JANELA_W;
+		dMob5.y = JANELA_H/2;
+	}
+	else if (sCamera.x > 2400){
+		dMob5.x = -10 - dMob1.w;
+		dMob5.y = JANELA_H/2;	
+	}
 }
