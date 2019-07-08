@@ -72,7 +72,7 @@ SDL_Texture* Text_Ranking;
 SDL_Texture* Text_Credits;
 
 SDL_Rect sEsqueleto = {0, 0, PLAYER_W, PLAYER_H};
-SDL_Rect dEsqueleto = {-100, -100, 55, 75};
+SDL_Rect dEsqueleto = {JANELA_W, JANELA_H, 55, 75};
 SDL_Rect sPlayer = {0, 0, PLAYER_W, PLAYER_H}; //Sprites Player
 SDL_Rect dPlayer = {JANELA_W/2, JANELA_H/2, 55, 75}; //Movimentação Player
 
@@ -87,7 +87,8 @@ SDL_Rect dBox = {285, 320, 228, 38}; // Posição X, Posição Y, Tamanho // OBS
 typedef struct
 {
 	int Px;
-	int Py;	
+	int Py;
+	int Vida;	
 } Jogador;
 
 
@@ -112,8 +113,11 @@ void Colisao_Fixa();
 void Animation_Logic();
 void Render_HowPlay ();
 void Destruir_Menu ();
+void Inimigo ();
+//----------------------------------------------------------------------------------------------
 
 int main (){
+
 	SDL_Init (SDL_INIT_EVERYTHING);
 
 	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
@@ -122,10 +126,7 @@ int main (){
 
 	player.Px = dPlayer.x + sCamera.x;
 	player.Py = dPlayer.y + sCamera.y;
-
-
-	dEsqueleto.x = 0;
-	dEsqueleto.y = 0;
+	player.Vida = 10;
 
 	if (!Inicio()){
 
@@ -136,6 +137,7 @@ int main (){
 		Menu();
 	}
 }
+//-----------------------------------------------------------------------------------------------
 
 bool Inicio (){
 
@@ -346,7 +348,7 @@ void Jogo_Inteiro (){
 	Musicas_Tops();
 	const float FPS = 24;                    // // // // // //
 	const float FrameDelay = 1000/FPS;      //  Frame Per  //
-	unsigned long FrameStart;            //    Second   //
+	unsigned long FrameStart;              //    Second   //
 	float FrameTime;                      // // // // // //
 	XPlayer();
 	Obter_Fundo();
@@ -391,13 +393,17 @@ void Jogo_Inteiro (){
 				}
 			}
 
+			Inimigo ();
+
 			Andar_Tecla ();
 			Colisao_Fixa();
 			Andar_Logic ();
 			if (colidiu == false)
 				Animation_Logic();
 			
-			//printf("Player x: %d Player y: %d\n", sCamera.x, sCamera.y);
+			//printf("\ncamera x: %d camera y: %d\n camera w: %d camera h: %d\n\n", sCamera.x, sCamera.y, sCamera.x+sCamera.w, sCamera.y+sCamera.h);
+
+			//printf("Esqueleto x: %d Esqueleto y: %d\n\n", dEsqueleto.x, dEsqueleto.y);
 			Limitador++;
 
 		}
@@ -412,6 +418,7 @@ void Jogo_Inteiro (){
 	Liberar_Musicas();
 	SDL_FreeSurface(PlayerSurface);
     SDL_FreeSurface(Background);
+    SDL_FreeSurface(EsqueletoSurface);
 
     Mix_CloseAudio();
 
@@ -803,4 +810,27 @@ void Colisao_Fixa(){
 
 		fclose(C_down);
 	}
+}
+
+void Inimigo(){
+
+	if(sCamera.x >= 408 && sCamera.x +sCamera.w <= 952 && sCamera.y >= 26 && sCamera.y + sCamera.h <= 346){
+		if (direita == true)
+			dEsqueleto.x -= SPEED*3;
+		if (esquerda == true)
+			dEsqueleto.x += SPEED*3;
+		if(cima == true)
+			dEsqueleto.y += SPEED*4;
+		if(baixo == true)
+			dEsqueleto.y -= SPEED*4;
+	}
+	else if (sCamera.x < 408){
+		dEsqueleto.x = JANELA_W;
+		dEsqueleto.y = JANELA_H/2;
+	}
+	else if (sCamera.x > 680){
+		dEsqueleto.x = -10 - dEsqueleto.w;
+		dEsqueleto.y = JANELA_H/2;		
+	}
+
 }
