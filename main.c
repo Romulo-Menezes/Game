@@ -30,6 +30,7 @@ bool Play = true;
 int Limitador = 0;
 int Passos = 1;
 int Imunidade = 0;
+int Contador = 0;
 
 bool esquerda = false, direita = false, cima = false, baixo = false;
 bool colidiu = false;
@@ -56,6 +57,15 @@ SDL_Texture* Layer_Up_Fundo;
 SDL_Texture* Caverna;
 SDL_Texture* Sala_Final;
 
+//HUD
+SDL_Surface* HUD_Surface;
+SDL_Surface* Vida_Surface;
+SDL_Texture* HUD;
+SDL_Texture* Vida;
+
+SDL_Rect sVida = {0, 0, 800, 600};
+SDL_Rect dVida = {0, 0, 800, 600};
+
 //Musicas
 Mix_Chunk* Musica_1;
 Mix_Chunk* Musica_2;
@@ -75,11 +85,18 @@ SDL_Texture* Text_Credits;
 
 SDL_Rect sEsqueleto = {0, 0, PLAYER_W, PLAYER_H};
 SDL_Rect dEsqueleto = {JANELA_W, JANELA_H, 55, 75};
+
 SDL_Rect dMob1 = {JANELA_W, JANELA_H, 55, 75};
 SDL_Rect dMob2 = {JANELA_W, JANELA_H, 55, 75};
 SDL_Rect dMob3 = {JANELA_W, JANELA_H, 55, 75};
 SDL_Rect dMob4 = {JANELA_W, JANELA_H, 55, 75};
 SDL_Rect dMob5 = {JANELA_W, JANELA_H, 55, 75};
+
+SDL_Rect sMob1 = {0, 0, PLAYER_W, PLAYER_H};
+SDL_Rect sMob3 = {0, 0, PLAYER_W, PLAYER_H};
+SDL_Rect sMob4 = {0, 0, PLAYER_W, PLAYER_H};
+SDL_Rect sMob5 = {0, 0, PLAYER_W, PLAYER_H};
+
 SDL_Rect sPlayer = {0, 0, PLAYER_W, PLAYER_H}; //Sprites Player
 SDL_Rect dPlayer = {JANELA_W/2, JANELA_H/2, 55, 75}; //Movimentação Player
 
@@ -122,7 +139,9 @@ void Render_HowPlay ();
 void Destruir_Menu ();
 void Inimigo ();
 void Inimigo_Anda();
+void Inimigo_Animacao();
 void Colisao_Inimigo();
+void Muda_Vida();
 void MudancaDeMapa();
 //----------------------------------------------------------------------------------------------
 
@@ -397,15 +416,14 @@ void Jogo_Inteiro (){
 		Inimigo_Anda();
 		Colisao_Inimigo();
 
-		if (player.Vida <= 0){
-			Play = false;
-		}
-
-		Limitador++;
-		Passos++;
+		Muda_Vida();
 
 		if (Imunidade != 0)
 			Imunidade--;
+
+		Limitador++;
+		Contador ++;
+		Passos++;
 		
 		FrameTime = SDL_GetTicks() - FrameStart;
 		if (FrameDelay > FrameTime){             
@@ -437,7 +455,7 @@ void Jogo_Inteiro (){
     //Fim//
     SDL_Quit();
 }
-//****************************************************************************************************************8***
+//********************************************************************************************************************
 
 void Render_Menu (void){ // Colocar aqui as imagens e texturas que serão carregadas para serem usadas nas coisas do menu
 	Image_Menu = IMG_Load("Resources/Image/Menu.png");
@@ -469,10 +487,16 @@ void Obter_Fundo (void){ //Imagem de fundo
 	Background_Up = IMG_Load("Resources/Image/LayerUpMapa.png");
 	Textura_Fundo = SDL_CreateTextureFromSurface (render, Background);
 	Layer_Up_Fundo = SDL_CreateTextureFromSurface (render, Background_Up);
+
 	CavernaS = IMG_Load("Resources/Image/Caverna_Mapa.png");
 	Sala_FinalS = IMG_Load("Resources/Image/Sala_Final.png");
 	Caverna = SDL_CreateTextureFromSurface(render, CavernaS);
 	Sala_Final = SDL_CreateTextureFromSurface(render, Sala_FinalS);
+
+	HUD_Surface = IMG_Load("Resources/Image/HUD.png");
+	Vida_Surface = IMG_Load("Resources/Image/Vida.png");
+	HUD = SDL_CreateTextureFromSurface(render, HUD_Surface);
+	Vida = SDL_CreateTextureFromSurface(render, Vida_Surface);
 }
 
 bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na tela
@@ -481,17 +505,26 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 	if(Muda_Mapa == 1){
 		SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
 		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
+
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
-		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob1);
-		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob2);
-		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob3);
-		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob4);
-		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob5);
+		SDL_RenderCopy(render, EsqueletoTexture, &sMob1, &dMob1);
+		//SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dMob2);
+		SDL_RenderCopy(render, EsqueletoTexture, &sMob3, &dMob3);
+		SDL_RenderCopy(render, EsqueletoTexture, &sMob4, &dMob4);
+		SDL_RenderCopy(render, EsqueletoTexture, &sMob5, &dMob5);
+
 		SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
+
+		SDL_RenderCopy (render, Vida, &sVida, &dVida);
+		SDL_RenderCopy (render, HUD, NULL, NULL);
+
 	}
 	else if(Muda_Mapa == 2){
 		SDL_RenderCopy(render,Caverna, &sCamera, &dCamera);
 		SDL_RenderCopy(render, PlayerTexture, &sPlayer, &dPlayer);
+
+		SDL_RenderCopy (render, Vida, &sVida, &dVida);
+		SDL_RenderCopy (render, HUD, NULL, NULL);
 	}
 	SDL_RenderPresent(render);
 }
@@ -988,6 +1021,13 @@ void Inimigo_Anda(){
 	else{
 		Passos = -80;
 	}
+
+	Inimigo_Animacao(&sEsqueleto);
+	Inimigo_Animacao(&sMob1);
+	Inimigo_Animacao(&sMob3);
+	Inimigo_Animacao(&sMob4);
+	Inimigo_Animacao(&sMob5);
+
 }
 
 void Colisao_Inimigo (){
@@ -1057,4 +1097,68 @@ void Colisao_Inimigo (){
 			Imunidade = 100;
 		}
 	}
+}
+
+void Muda_Vida(){
+
+	if(player.Vida == 25){
+		sVida.y = 600;
+	}
+	else if (player.Vida == 20){
+		sVida.y = 1200;
+	}
+	else if (player.Vida == 15){
+		sVida.y = 1800;
+	}
+	else if (player.Vida == 10){
+		sVida.y = 2400;
+	}
+	else if (player.Vida == 5){
+		sVida.y = 3000;
+	}
+	else if (player.Vida <= 0){
+		Play = false;
+	}
+
+	if(Imunidade != 0){
+		if(sVida.x != 800){
+			if(Limitador <= LIMITE){
+				sVida.x += 800;
+			}
+			else{
+				Limitador = 0;
+			}
+		}
+		else{
+			sVida.x = 0;
+		}
+	}
+	else{
+		sVida.x = 0;
+	}
+}
+
+void Inimigo_Animacao(SDL_Rect *mob){
+
+	if(Passos >= -80 && Passos <= 80){
+		mob->y = PLAYER_H;
+		if(mob->x < PLAYER_W * 3 && Contador >= LIMITE){
+			mob->x += PLAYER_W;
+		}
+		else if(mob->x >= PLAYER_W * 3 && Contador >= LIMITE){
+			Contador = 0;
+			mob->x = 0;
+		}
+	}
+	else{
+		mob->y = 0;
+		if(mob->x < PLAYER_W * 3 && Contador >= LIMITE){
+			mob->x += PLAYER_W;
+		}
+		else if(mob->x >= PLAYER_W * 3 && Contador >= LIMITE){
+			Contador = 0;
+			mob->x = 0;
+		}
+	}
+
 }
