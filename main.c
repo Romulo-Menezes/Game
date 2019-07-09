@@ -21,13 +21,14 @@ int seletor = 0, menu = 1, how = 1, rank = 1, cred = 1;
 int Muda_Mapa = 1;
 int LARGURA = 3264;
 int ALTURA = 1920;
-int LIMITE = 4;
+int LIMITE = 8;
 
 int SPEED = 2;
 
 bool Play = true;
 
 int Limitador = 0;
+int Passos = 1;
 
 bool esquerda = false, direita = false, cima = false, baixo = false;
 bool colidiu = false;
@@ -120,6 +121,8 @@ void Animation_Logic();
 void Render_HowPlay ();
 void Destruir_Menu ();
 void Inimigo ();
+void Inimigo_Anda();
+void MudancaDeMapa();
 //----------------------------------------------------------------------------------------------
 
 int main (){
@@ -348,11 +351,11 @@ void Credits (){
 		}
 	}
 }
-
+//**************************************************************************************************************
 void Jogo_Inteiro (){
 
 	Musicas_Tops();
-	const float FPS = 24;                    // // // // // //
+	const float FPS = 45;                    // // // // // //
 	const float FrameDelay = 1000/FPS;      //  Frame Per  //
 	unsigned long FrameStart;              //    Second   //
 	float FrameTime;                      // // // // // //
@@ -370,37 +373,24 @@ void Jogo_Inteiro (){
 			if (event.type == SDL_QUIT){ //Botão X para fechar
 				Play = false;
 			}
+			MudancaDeMapa();
+			Andar_Tecla ();
+		}
 
-			if(Muda_Mapa == 1 && player.Px >= 3136 && player.Px <= 3168 && player.Py == 1348){
+		Colisao_Fixa();
+		Andar_Logic ();
 
-				if (event.type == SDL_KEYDOWN){
+		if (colidiu == false)
+			Animation_Logic();
 
-					if (event.key.keysym.sym == SDLK_e){
-						Muda_Mapa = 2;
-						ALTURA = 1200;
-						LARGURA = 800;
-						sCamera.x = 184; sCamera.y = 890; sCamera.w = 400; sCamera.h = 300;
-						player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
-						SPEED = 2;					
-					}
-				}
-			}
+		Inimigo ();
+		Inimigo_Anda();
 
-			if(Muda_Mapa == 2 && player.Px >= 542 && player.Px <= 630 && player.Py == 1194){
-				if(event.type == SDL_KEYDOWN){
-					if(event.key.keysym.sym == SDLK_e){
-						Muda_Mapa = 1;
-						ALTURA = 1920;
-						LARGURA = 3264;
-						sCamera.x = 2752; sCamera.y = 1048; sCamera.w = 272; sCamera.h = 160;
-						player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
-						SPEED =2;
-					}
-				}
-			}
+		Limitador++;
+		Passos++;
 
-			Inimigo ();
-
+<<<<<<< HEAD
+=======
 			Andar_Tecla ();
 			Colisao_Fixa();
 			Andar_Logic ();
@@ -414,6 +404,7 @@ void Jogo_Inteiro (){
 
 		}
 		
+>>>>>>> c3a7ff8ea8bb45c100d5d1adeff9c3057c22d50e
 		FrameTime = SDL_GetTicks() - FrameStart;
 
 		if (FrameDelay > FrameTime){             
@@ -445,6 +436,7 @@ void Jogo_Inteiro (){
     //Fim//
     SDL_Quit();
 }
+//****************************************************************************************************************8***
 
 void Render_Menu (void){ // Colocar aqui as imagens e texturas que serão carregadas para serem usadas nas coisas do menu
 	Image_Menu = IMG_Load("Resources/Image/Menu.png");
@@ -823,6 +815,51 @@ void Colisao_Fixa(){
 	}
 }
 
+void MudancaDeMapa (){
+
+	if(Muda_Mapa == 1 && player.Px >= 3136 && player.Px <= 3168 && player.Py == 1348){
+
+		if (event.type == SDL_KEYDOWN){
+
+			if (event.key.keysym.sym == SDLK_e){
+
+				Muda_Mapa = 2;
+
+				ALTURA = 1200;
+
+				LARGURA = 800;
+
+				sCamera.x = 184; sCamera.y = 890; sCamera.w = 400; sCamera.h = 300;
+
+				player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
+
+				SPEED = 2;					
+			}
+		}
+	}
+
+	if(Muda_Mapa == 2 && player.Px >= 542 && player.Px <= 630 && player.Py == 1194){
+
+		if(event.type == SDL_KEYDOWN){
+
+			if(event.key.keysym.sym == SDLK_e){
+
+				Muda_Mapa = 1;
+
+				ALTURA = 1920;
+
+				LARGURA = 3264;
+
+				sCamera.x = 2752; sCamera.y = 1048; sCamera.w = 272; sCamera.h = 160;
+
+				player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
+
+				SPEED =2;
+			}
+		}
+	}
+}
+
 void Inimigo(){
 
 	if(sCamera.x >= 408 && sCamera.x +sCamera.w <= 952 && sCamera.y >= 26 && sCamera.y + sCamera.h <= 346){
@@ -863,6 +900,8 @@ void Inimigo(){
 		dMob1.y = JANELA_H/2;	
 	}
 
+<<<<<<< HEAD
+=======
 	/*if(sCamera.x >= 1360 && sCamera.x +sCamera.w <= 1800 && sCamera.y >= 804 && sCamera.y + sCamera.h <= 1024){
 		if (direita == true)
 			dMob2.x -= SPEED*3;
@@ -882,6 +921,7 @@ void Inimigo(){
 		dMob2.y = JANELA_H/2;		
 	}*/
 
+>>>>>>> c3a7ff8ea8bb45c100d5d1adeff9c3057c22d50e
 	if(sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
 		if (direita == true)
 			dMob3.x -= SPEED*3;
@@ -939,3 +979,37 @@ void Inimigo(){
 		dMob5.y = JANELA_H/2;	
 	}
 }
+<<<<<<< HEAD
+
+void Inimigo_Anda(){
+
+	if (Passos <= 80){
+
+		dEsqueleto.y -= SPEED;
+
+		dMob1.y -= SPEED;
+
+		dMob3.y -= SPEED;
+
+		dMob4.y -= SPEED;
+
+		dMob5.y -= SPEED;
+	}
+	else if (Passos <= 240){
+
+		dEsqueleto.y += SPEED;
+
+		dMob1.y += SPEED;
+
+		dMob3.y += SPEED;
+
+		dMob4.y += SPEED;
+
+		dMob5.y += SPEED;		
+	}
+	else{
+		Passos = -80;
+	}
+}
+=======
+>>>>>>> c3a7ff8ea8bb45c100d5d1adeff9c3057c22d50e
