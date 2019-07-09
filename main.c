@@ -373,44 +373,29 @@ void Jogo_Inteiro (){
 			if (event.type == SDL_QUIT){ //Botão X para fechar
 				Play = false;
 			}
-			MudancaDeMapa();
-			Andar_Tecla ();
-		}
-
-		Colisao_Fixa();
-		Andar_Logic ();
-
-		if (colidiu == false)
-			Animation_Logic();
-
-		Inimigo ();
-		Inimigo_Anda();
-
-		Limitador++;
-		Passos++;
-
-<<<<<<< HEAD
-=======
-			Andar_Tecla ();
-			Colisao_Fixa();
-			Andar_Logic ();
-			if (colidiu == false)
-				Animation_Logic();
-			
-			printf("\ncamera x: %d camera y: %d\ncamera w: %d camera h: %d\n\n", sCamera.x, sCamera.y, sCamera.x+sCamera.w, sCamera.y+sCamera.h);
-
-			//printf("Esqueleto x: %d Esqueleto y: %d\n\n", dEsqueleto.x, dEsqueleto.y);
-			Limitador++;
-
-		}
 		
->>>>>>> c3a7ff8ea8bb45c100d5d1adeff9c3057c22d50e
-		FrameTime = SDL_GetTicks() - FrameStart;
+			MudancaDeMapa();
+		
+			Andar_Tecla ();
+	}
 
-		if (FrameDelay > FrameTime){             
-			SDL_Delay(FrameDelay - FrameTime); 
-		}
-	}	
+	Colisao_Fixa();
+	Andar_Logic ();
+
+	if (colidiu == false)
+		Animation_Logic();
+
+	Inimigo ();
+	Inimigo_Anda();
+
+	Limitador++;
+	Passos++;
+	
+	FrameTime = SDL_GetTicks() - FrameStart;
+	if (FrameDelay > FrameTime){             
+		SDL_Delay(FrameDelay - FrameTime); 
+	}
+}	
 
 	Liberar_Musicas();
 	SDL_FreeSurface(PlayerSurface);
@@ -900,28 +885,6 @@ void Inimigo(){
 		dMob1.y = JANELA_H/2;	
 	}
 
-<<<<<<< HEAD
-=======
-	/*if(sCamera.x >= 1360 && sCamera.x +sCamera.w <= 1800 && sCamera.y >= 804 && sCamera.y + sCamera.h <= 1024){
-		if (direita == true)
-			dMob2.x -= SPEED*3;
-		if (esquerda == true)
-			dMob2.x += SPEED*3;
-		if(cima == true)
-			dMob2.y += SPEED*4;
-		if(baixo == true)
-			dMob2.y -= SPEED*4;
-	}
-	else if (sCamera.x < 1360){
-		dMob2.x = JANELA_W;
-		dMob2.y = JANELA_H/2;
-	}
-	else if (sCamera.x > 1600){
-		dMob2.x = -10 - dMob1.w;
-		dMob2.y = JANELA_H/2;		
-	}*/
-
->>>>>>> c3a7ff8ea8bb45c100d5d1adeff9c3057c22d50e
 	if(sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
 		if (direita == true)
 			dMob3.x -= SPEED*3;
@@ -979,7 +942,6 @@ void Inimigo(){
 		dMob5.y = JANELA_H/2;	
 	}
 }
-<<<<<<< HEAD
 
 void Inimigo_Anda(){
 
@@ -1011,5 +973,3 @@ void Inimigo_Anda(){
 		Passos = -80;
 	}
 }
-=======
->>>>>>> c3a7ff8ea8bb45c100d5d1adeff9c3057c22d50e
