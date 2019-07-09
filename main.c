@@ -18,6 +18,14 @@
 
 int seletor = 0, menu = 1, how = 1, rank = 1, cred = 1;
 
+//Variaveis do "ESC"
+
+int escolha = 0, pause = 1;
+
+//VARIÁVEIS DO MENU DA MORTE
+
+int again = 0, morreu = 0;
+
 int Muda_Mapa = 1;
 int LARGURA = 3264;
 int ALTURA = 1920;
@@ -25,12 +33,16 @@ int LIMITE = 8;
 
 int SPEED = 2;
 
-bool Play = true;
+bool Play = true, Ataque = false;
 
 int Limitador = 0;
 int Passos = 1;
-int Imunidade = 0;
+int Imunidade = 0, Imunidade_Mob = 0;
+
 int Contador = 0;
+int Contador_Ataque = 0;
+int Limitador_Ataque = 0;
+int Pos_Ataque;
 
 bool esquerda = false, direita = false, cima = false, baixo = false;
 bool colidiu = false;
@@ -44,8 +56,19 @@ SDL_Event event;
 //Player
 SDL_Surface* PlayerSurface;
 SDL_Texture* PlayerTexture;
+
 SDL_Surface* EsqueletoSurface;
 SDL_Texture* EsqueletoTexture;
+
+SDL_Surface* MagicaLR_Surface;
+SDL_Surface* MagicaTD_Surface;
+SDL_Texture* MagicaLR;
+SDL_Texture* MagicaTD;
+
+SDL_Rect dMagiaLR = {-100, -100, 60, 30};
+SDL_Rect dMagiaTD = {-100, -100, 30, 60};
+SDL_Rect sMagiaLR = {0, 0, 30, 15};
+SDL_Rect sMagiaTD = {0, 0, 15, 30};
 
 //Fundo
 SDL_Surface* Background;
@@ -83,6 +106,18 @@ SDL_Texture* Text_Control;
 SDL_Texture* Text_Ranking;
 SDL_Texture* Text_Credits;
 
+//Menu ESC
+SDL_Surface* Image_Esc;
+SDL_Texture* Text_Esc;
+SDL_Surface* Image_BordaEsc;
+SDL_Texture* Text_BordaEsc;
+
+//Menu Morte
+SDL_Surface* Image_MenuMorte;
+SDL_Texture* Text_MenuMorte;
+SDL_Surface* Image_MorteBorda;
+SDL_Texture* Text_MorteBorda;
+
 SDL_Rect sEsqueleto = {0, 0, PLAYER_W, PLAYER_H};
 SDL_Rect dEsqueleto = {JANELA_W, JANELA_H, 55, 75};
 
@@ -106,6 +141,12 @@ SDL_Rect dCamera = {0, 0, 800, 600};
 
 SDL_Rect sBox = {0, 0, 228, 38}; // Sprites da Caixa
 SDL_Rect dBox = {285, 320, 228, 38}; // Posição X, Posição Y, Tamanho // OBS: SE MEXER AQUI TEM QUE MEXER NO SWITCH DO SELETOR TBM
+
+SDL_Rect sEsc = {0, 0, 115, 50}; // Sprites da caixa seletora do ESC
+SDL_Rect dEsc = {267, 326, 115, 50}; 
+
+SDL_Rect sBordaMorte = {0, 0, 180, 85}; // Sprites da caixa seletora do ESC
+SDL_Rect dBordaMorte = {145, 340, 180, 85}; 
 
 
 typedef struct
@@ -143,6 +184,14 @@ void Inimigo_Animacao();
 void Colisao_Inimigo();
 void Muda_Vida();
 void MudancaDeMapa();
+void Obter_Esc();
+void ESC();
+void Player_Ataque();
+void Ataque_False();
+void Movimento_Magia();
+void Inimigo_Dano();
+void Inimigo_Morto();
+void Reset();
 //----------------------------------------------------------------------------------------------
 
 int main (){
@@ -152,17 +201,6 @@ int main (){
 	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
 
 	bool Play = true;
-
-	player.Px = dPlayer.x + sCamera.x;
-	player.Py = dPlayer.y + sCamera.y;
-	player.Vida = 30;
-
-	mob[0].Vida = 15;
-	mob[1].Vida = 15;
-	mob[2].Vida = 15;
-	mob[3].Vida = 15;
-	mob[4].Vida = 15;
-
 
 	if (!Inicio()){
 
@@ -194,6 +232,8 @@ void Menu (){
 
 	Render_Menu();
 
+	menu = 1;
+
 	while (menu){
 
 		SDL_RenderCopy (render, Textura_Menu, NULL, NULL);
@@ -208,9 +248,7 @@ void Menu (){
 
 			if (event.type == SDL_QUIT){ //Botão X para fechar
 				
-				menu = 0;
-
-				Destruir_Menu ();		
+				menu = 0;	
 			}
 
 			if (event.type == SDL_KEYDOWN){
@@ -236,6 +274,7 @@ void Menu (){
 					if (seletor == 0){
 						menu = 0;
 						SDL_RenderClear(render);
+						Reset();
 						Jogo_Inteiro();
 					}
 
@@ -288,6 +327,9 @@ void Menu (){
 	
 		}
 	}
+
+	Destruir_Menu ();
+	SDL_Quit();	
 }
 
 void Destruir_Menu (){
@@ -303,7 +345,6 @@ void Destruir_Menu (){
     SDL_DestroyTexture(Text_Credits);
     SDL_DestroyTexture(Text_Control);
     SDL_DestroyWindow(Janela);
-    SDL_Quit();
 }
 
 void HowPlay (){
@@ -318,6 +359,7 @@ void HowPlay (){
 			how = 0;
 			menu = 0;
 			Destruir_Menu ();
+			SDL_Quit();
 		}
 		
 		if (event.type == SDL_KEYDOWN){
@@ -343,6 +385,7 @@ void Ranking (){
 			rank = 0;
 			menu = 0;
 			Destruir_Menu ();
+			SDL_Quit();
 		}
 		
 		if (event.type == SDL_KEYDOWN){
@@ -367,6 +410,7 @@ void Credits (){
 			cred = 0;
 			menu = 0;
 			Destruir_Menu ();
+			SDL_Quit();
 		}
 		
 		if (event.type == SDL_KEYDOWN){
@@ -378,9 +422,23 @@ void Credits (){
 		}
 	}
 }
+
 //**************************************************************************************************************
 void Jogo_Inteiro (){
 
+	Reset();
+
+	player.Px = dPlayer.x + sCamera.x;
+	player.Py = dPlayer.y + sCamera.y;
+	player.Vida = 30;
+
+	mob[0].Vida = 15;
+	mob[1].Vida = 15;
+	mob[2].Vida = 15;
+	mob[3].Vida = 15;
+	mob[4].Vida = 15;
+
+	Play = true;
 	Musicas_Tops();
 	const float FPS = 45;                    // // // // // //
 	const float FrameDelay = 1000/FPS;      //  Frame Per  //
@@ -388,6 +446,7 @@ void Jogo_Inteiro (){
 	float FrameTime;                      // // // // // //
 	XPlayer();
 	Obter_Fundo();
+	Obter_Esc();
 
 	while (Play){
 
@@ -400,30 +459,46 @@ void Jogo_Inteiro (){
 			if (event.type == SDL_QUIT){ //Botão X para fechar
 				Play = false;
 			}
+
+			if (event.type == SDL_KEYDOWN){
+				if (event.key.keysym.sym == SDLK_q)
+					Ataque = true;
+			}
 		
 			MudancaDeMapa();
-		
 			Andar_Tecla ();
+			ESC();
 		}
 
+		Ataque_False();
 		Colisao_Fixa();
 		Andar_Logic ();
 
 		if (colidiu == false)
 			Animation_Logic();
 
+		Player_Ataque();
+		Movimento_Magia();
+
 		Inimigo ();
 		Inimigo_Anda();
 		Colisao_Inimigo();
-
+		Inimigo_Dano();
+		Inimigo_Morto();
 		Muda_Vida();
 
 		if (Imunidade != 0)
 			Imunidade--;
 
+		if (Imunidade_Mob != 0)
+			Imunidade_Mob--;
+
 		Limitador++;
 		Contador ++;
 		Passos++;
+
+		if(Limitador_Ataque == 1)
+			Contador_Ataque++;
 		
 		FrameTime = SDL_GetTicks() - FrameStart;
 		if (FrameDelay > FrameTime){             
@@ -432,28 +507,39 @@ void Jogo_Inteiro (){
 }	
 
 	Liberar_Musicas();
-	SDL_FreeSurface(PlayerSurface);
-    SDL_FreeSurface(Background);
-    SDL_FreeSurface(EsqueletoSurface);
-
     Mix_CloseAudio();
 
-    //Destruindo coisas do Menu também
-    SDL_FreeSurface(Image_Box);
-	SDL_FreeSurface(Image_Menu);
-	SDL_FreeSurface(Image_Control);
-	SDL_DestroyTexture(Textura_Menu);
-	SDL_DestroyTexture(Text_Options_Box);
-    SDL_DestroyTexture(Text_Control);
+	//Destruindo e liberando geral
+	SDL_FreeSurface(PlayerSurface);
+	SDL_FreeSurface(Background);
+	SDL_FreeSurface(Background_Up);
+	SDL_FreeSurface(EsqueletoSurface);
+	SDL_FreeSurface(CavernaS);
+	SDL_FreeSurface(Sala_FinalS);
+	SDL_FreeSurface(Image_Esc);
+	SDL_FreeSurface(Image_BordaEsc);
+	SDL_FreeSurface(HUD_Surface);
+	SDL_FreeSurface(Vida_Surface);
+	SDL_FreeSurface(Image_MenuMorte);
+	SDL_FreeSurface(Image_MorteBorda);
 
-    //Destruindo geral
-    SDL_DestroyRenderer(render); 
-    SDL_DestroyTexture(PlayerTexture);
-    SDL_DestroyTexture(Textura_Fundo);
-    SDL_DestroyWindow(Janela);
-    
-    //Fim//
-    SDL_Quit();
+	SDL_DestroyTexture(PlayerTexture);
+	SDL_DestroyTexture(Text_MorteBorda);
+	SDL_DestroyTexture(HUD);
+	SDL_DestroyTexture(Vida);
+	SDL_DestroyTexture(Text_MenuMorte);
+	SDL_DestroyTexture(Caverna);
+	SDL_DestroyTexture(Layer_Up_Fundo);
+	SDL_DestroyTexture(Textura_Fundo);
+	SDL_DestroyTexture(Sala_Final);
+	SDL_DestroyTexture(Text_Esc);
+	SDL_DestroyTexture(Text_BordaEsc);
+
+	SDL_DestroyRenderer(render); 
+	SDL_DestroyWindow(Janela);
+
+	//Fim//
+	SDL_Quit();
 }
 //********************************************************************************************************************
 
@@ -481,6 +567,76 @@ bool Render_Janela (void){
 	SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
 }
 
+void Obter_Esc (void){
+	Image_Esc = IMG_Load("Resources/Image/MenuESC.png");
+	Text_Esc = SDL_CreateTextureFromSurface(render, Image_Esc);
+
+	Image_BordaEsc = IMG_Load("Resources/Image/BordaESC.png");
+	Text_BordaEsc = SDL_CreateTextureFromSurface(render, Image_BordaEsc);
+}
+
+void ESC (){
+
+	if (event.type == SDL_KEYDOWN){
+
+		if (event.key.keysym.sym == SDLK_ESCAPE){
+
+			pause = 1;
+
+			while (pause){
+
+				while(SDL_PollEvent(&event)){
+
+					if (escolha == 0){
+						dEsc.x = 267;
+					}
+
+					if (escolha == 1){
+						dEsc.x = 417;
+					}
+
+					if (event.type == SDL_KEYDOWN){
+
+						if (event.key.keysym.sym == SDLK_LEFT){
+									
+							escolha--;
+
+							if (escolha < 0)
+								escolha = 0;
+						}
+
+						if (event.key.keysym.sym == SDLK_RIGHT){
+									
+							escolha++;
+
+							if (escolha > 1)
+								escolha = 1;
+						}
+
+						if (event.key.keysym.scancode == SDL_SCANCODE_RETURN){
+									
+							if (escolha == 0){ // 0 é o lado esquerdo e é SIM
+								pause = 0;
+								Play = false;
+								Menu();
+							}
+									
+							if (escolha == 1){
+								pause = 0;
+							}
+						}
+					}
+
+					SDL_RenderClear(render);
+					SDL_RenderCopy(render, Text_Esc, NULL, NULL);
+					SDL_RenderCopy(render, Text_BordaEsc, &sEsc, &dEsc);
+					SDL_RenderPresent(render);
+				}
+			}
+		}
+	}
+}
+
 void Obter_Fundo (void){ //Imagem de fundo
 
 	Background = IMG_Load("Resources/Image/Mapa.png");
@@ -497,6 +653,11 @@ void Obter_Fundo (void){ //Imagem de fundo
 	Vida_Surface = IMG_Load("Resources/Image/Vida.png");
 	HUD = SDL_CreateTextureFromSurface(render, HUD_Surface);
 	Vida = SDL_CreateTextureFromSurface(render, Vida_Surface);
+
+	Image_MenuMorte = IMG_Load("Resources/Image/MorteMenu.png");
+	Text_MenuMorte = SDL_CreateTextureFromSurface(render, Image_MenuMorte);
+	Image_MorteBorda = IMG_Load("Resources/Image/MorteBorda.png");
+	Text_MorteBorda = SDL_CreateTextureFromSurface(render, Image_MorteBorda);
 }
 
 bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na tela
@@ -512,6 +673,9 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 		SDL_RenderCopy(render, EsqueletoTexture, &sMob3, &dMob3);
 		SDL_RenderCopy(render, EsqueletoTexture, &sMob4, &dMob4);
 		SDL_RenderCopy(render, EsqueletoTexture, &sMob5, &dMob5);
+
+		SDL_RenderCopy(render, MagicaLR, &sMagiaLR, &dMagiaLR); // esquerda e direita
+		SDL_RenderCopy(render, MagicaTD, &sMagiaTD, &dMagiaTD); // cima e baixo
 
 		SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
 
@@ -533,15 +697,22 @@ bool XPlayer (void){
 
 	PlayerSurface = IMG_Load("Resources/Sprites/Player.png");
 	PlayerTexture = SDL_CreateTextureFromSurface(render, PlayerSurface);
+
+	MagicaLR_Surface = IMG_Load("Resources/Image/Magia_LR.png");
+	MagicaLR = SDL_CreateTextureFromSurface(render, MagicaLR_Surface);
+	MagicaTD_Surface = IMG_Load("Resources/Image/Magia_TD.png");
+	MagicaTD = SDL_CreateTextureFromSurface(render, MagicaTD_Surface);
+
 	EsqueletoSurface = IMG_Load("Resources/Sprites/Esqueleto.png");
 	EsqueletoTexture = SDL_CreateTextureFromSurface(render, EsqueletoSurface);
+
 }
 
 void Musicas_Tops(){
 
-	Musica_1 = Mix_LoadWAV("Melodia/The Wolven Storm.mp3");
-	Musica_2 = Mix_LoadWAV("Melodia/Sword of Destiny.mp3");
-	Musica_3 = Mix_LoadWAV("Melodia/Potência.mp3");
+	Musica_1 = Mix_LoadWAV("Resources/Melodias/Musica1.mp3");
+	Musica_2 = Mix_LoadWAV("Resources/Melodias/Musica2.mp3");
+	Musica_3 = Mix_LoadWAV("Resources/Melodias/Musica3.mp3");
 	Mix_AllocateChannels(8); //Alocar canais para as músicas
 	Mix_Volume(1, 7); //Canal e volume do canal, o volume vai de 0 a 10
 	Mix_Volume(2, 6);
@@ -896,7 +1067,7 @@ void MudancaDeMapa (){
 
 void Inimigo(){
 
-	if(sCamera.x >= 408 && sCamera.x +sCamera.w <= 952 && sCamera.y >= 26 && sCamera.y + sCamera.h <= 346){
+	if(mob[0].Vida > 0 && sCamera.x >= 408 && sCamera.x +sCamera.w <= 952 && sCamera.y >= 26 && sCamera.y + sCamera.h <= 346){
 		if (direita == true)
 			dEsqueleto.x -= SPEED*3;
 		if (esquerda == true)
@@ -915,7 +1086,7 @@ void Inimigo(){
 		dEsqueleto.y = JANELA_H/2;		
 	}
 
-	if(sCamera.x >= 854 && sCamera.x +sCamera.w <= 1398 && sCamera.y >= 124 && sCamera.y + sCamera.h <= 444){
+	if(mob[1].Vida > 0 && sCamera.x >= 854 && sCamera.x +sCamera.w <= 1398 && sCamera.y >= 124 && sCamera.y + sCamera.h <= 444){
 		if (direita == true)
 			dMob1.x -= SPEED*3;
 		if (esquerda == true)
@@ -934,7 +1105,7 @@ void Inimigo(){
 		dMob1.y = JANELA_H/2;	
 	}
 
-	if(sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
+	if(mob[2].Vida > 0 && sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
 		if (direita == true)
 			dMob3.x -= SPEED*3;
 		if (esquerda == true)
@@ -953,7 +1124,7 @@ void Inimigo(){
 		dMob3.y = JANELA_H/2 + 150;		
 	}
 
-	if(sCamera.x >= 228  && sCamera.x +sCamera.w <= 772 && sCamera.y >= 1584 && sCamera.y + sCamera.h <= 1956){
+	if(mob[3].Vida > 0 && sCamera.x >= 228  && sCamera.x +sCamera.w <= 772 && sCamera.y >= 1584 && sCamera.y + sCamera.h <= 1956){
 		if (direita == true)
 			dMob4.x -= SPEED*3;
 		if (esquerda == true)
@@ -972,7 +1143,7 @@ void Inimigo(){
 		dMob4.y = JANELA_H/2;	
 	}
 
-	if(sCamera.x >= 2182  && sCamera.x +sCamera.w <= 2726 && sCamera.y >= 1582 && sCamera.y + sCamera.h <= 1920){
+	if(mob[4].Vida > 0 && sCamera.x >= 2182  && sCamera.x +sCamera.w <= 2726 && sCamera.y >= 1582 && sCamera.y + sCamera.h <= 1920){
 		if (direita == true)
 			dMob5.x -= SPEED*3;
 		if (esquerda == true)
@@ -1117,7 +1288,64 @@ void Muda_Vida(){
 		sVida.y = 3000;
 	}
 	else if (player.Vida <= 0){
-		Play = false;
+		
+				morreu = 1;
+
+		while (morreu){
+
+			while(SDL_PollEvent(&event)){
+
+				if (event.type == SDL_KEYDOWN){
+
+					if (again == 0){
+						dBordaMorte.x = 145;
+					}
+
+					if (again == 1){
+						dBordaMorte.x = 455;
+					}
+
+					if (event.key.keysym.sym == SDLK_LEFT){
+											
+						again--;
+
+						if (again < 0){
+							again = 1;
+						}
+					}
+					
+					if (event.key.keysym.sym == SDLK_RIGHT){
+											
+						again++;
+
+						if (again > 1){
+							again = 0;
+						}
+					}
+
+					if (event.key.keysym.scancode == SDL_SCANCODE_RETURN){
+											
+						if (again == 0){ // 0 é o lado esquerdo e é SIM
+							morreu = 0;
+							Play = false;
+							Menu();
+						}
+											
+						if (again == 1){
+							morreu = 0;
+							Play = false;
+							Menu();
+						}
+					}
+				}
+
+				SDL_RenderClear(render);
+				SDL_RenderCopy(render, Text_MenuMorte, NULL, NULL);
+				SDL_RenderCopy(render, Text_MorteBorda, &sBordaMorte, &dBordaMorte);
+				SDL_RenderPresent(render);
+					
+			}
+		}
 	}
 
 	if(Imunidade != 0){
@@ -1161,4 +1389,349 @@ void Inimigo_Animacao(SDL_Rect *mob){
 		}
 	}
 
+}
+
+void Player_Ataque(){
+
+	if(Ataque == true){
+		if (sPlayer.y == 0 && Limitador_Ataque == 0){// cima
+			dMagiaTD.y = dPlayer.y + dPlayer.h;
+			dMagiaTD.x = dPlayer.x;
+			sMagiaTD.x = 15;
+			Limitador_Ataque = 1;
+			Pos_Ataque = 1;
+
+		}
+		else if (sPlayer.y == PLAYER_H && Limitador_Ataque == 0){ // baixo
+			dMagiaTD.y = dPlayer.y - dMagiaTD.h;
+			dMagiaTD.x = dPlayer.x + 30;
+			sMagiaTD.x = 0;
+			Limitador_Ataque = 1;
+			Pos_Ataque = 2;
+
+		}
+		else if (sPlayer.y == PLAYER_H * 2 && Limitador_Ataque == 0){ // esquerda
+			dMagiaLR.x = dPlayer.x - dMagiaLR.w;
+			dMagiaLR.y = dPlayer.y + 30;
+			sMagiaLR.y = 15;
+			Limitador_Ataque = 1;
+			Pos_Ataque = 3;
+
+		}
+		else if (sPlayer.y == PLAYER_H * 3 && Limitador_Ataque == 0){ // direita
+			dMagiaLR.x = dPlayer.x + dPlayer.w;
+			dMagiaLR.y = dPlayer.y + 30;
+			sMagiaLR.y = 0;
+			Limitador_Ataque = 1;
+			Pos_Ataque = 4;
+
+		}
+	}
+}
+
+void Movimento_Magia(){
+	if (Pos_Ataque == 1 && Limitador_Ataque == 1){
+
+		if(Contador_Ataque <= 60){
+			dMagiaTD.y += 4;
+		}
+		else{
+			Contador_Ataque = 0;
+			Limitador_Ataque = 0;
+			Ataque = false;
+		}
+
+	}
+
+	if (Pos_Ataque == 2 && Limitador_Ataque == 1){
+
+		if(Contador_Ataque <= 60){
+			dMagiaTD.y -= 4;
+		}
+		else{
+			Contador_Ataque = 0;
+			Limitador_Ataque = 0;
+			Ataque = false;
+		}
+
+	}
+
+	if (Pos_Ataque == 3 && Limitador_Ataque == 1){
+
+		if(Contador_Ataque <= 60){
+			dMagiaLR.x -= 4;
+		}
+		else{
+			Contador_Ataque = 0;
+			Limitador_Ataque = 0;
+			Ataque = false;
+		}
+
+	}
+
+	if (Pos_Ataque == 4 && Limitador_Ataque == 1){
+
+		if(Contador_Ataque <= 60){
+			dMagiaLR.x += 4;
+		}
+		else{
+			Contador_Ataque = 0;
+			Limitador_Ataque = 0;
+			Ataque = false;
+		}
+
+	}
+}
+
+void Ataque_False(){
+
+	if (Ataque == false){
+		dMagiaTD.x = -100;
+		dMagiaLR.x = -100;
+	}
+
+}
+
+void Inimigo_Dano(){
+
+	// MOB 0 
+	if (dMagiaLR.y + dMagiaLR.h  >= dEsqueleto.y && dMagiaLR.y <= dEsqueleto.y + dEsqueleto.w && Imunidade_Mob == 0){
+		if(dMagiaLR.x + dMagiaLR.w >= dEsqueleto.x && dMagiaLR.x <= dEsqueleto.x + dEsqueleto.w){
+			mob[0].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+		}
+	}
+	if (dMagiaLR.x + dMagiaLR.w >= dEsqueleto.x && dMagiaLR.x <= dEsqueleto.x + dEsqueleto.w && Imunidade_Mob == 0){
+		if(dMagiaLR.y + dMagiaLR.h >= dEsqueleto.y && dMagiaLR.y <= dEsqueleto.y + dEsqueleto.h){
+			mob[0].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+
+	if (dMagiaTD.y + dMagiaTD.h >= dEsqueleto.y && dMagiaTD.y <= dEsqueleto.y + dEsqueleto.w && Imunidade_Mob == 0){
+		if(dMagiaTD.x + dMagiaTD.w >= dEsqueleto.x && dMagiaTD.x <= dEsqueleto.x + dEsqueleto.w){
+			mob[0].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+	if (dMagiaTD.x + dMagiaTD.w >= dEsqueleto.x && dMagiaTD.x <= dEsqueleto.x + dEsqueleto.w && Imunidade_Mob == 0){
+		if(dMagiaTD.y + dMagiaTD.h >= dEsqueleto.y && dMagiaTD.y <= dEsqueleto.y + dEsqueleto.h){
+			mob[0].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+	// MOB 1 -----------------------------------------------------------------------------
+	if (dMagiaLR.y + dMagiaLR.h >= dMob1.y && dMagiaLR.y <= dMob1.y + dMob1.w && Imunidade_Mob == 0){
+		if(dMagiaLR.x + dMagiaLR.w >= dMob1.x && dMagiaLR.x <= dMob1.x + dMob1.w){
+			mob[1].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+	if (dMagiaLR.x + dMagiaLR.w >= dMob1.x && dMagiaLR.x <= dMob1.x + dMob1.w && Imunidade_Mob == 0){
+		if(dMagiaLR.y + dMagiaLR.h >= dMob1.y && dMagiaLR.y <= dMob1.y + dMob1.h){
+			mob[1].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+
+	if (dMagiaTD.y + dMagiaTD.h >= dMob1.y && dMagiaTD.y <= dMob1.y + dMob1.w && Imunidade_Mob == 0){
+		if(dMagiaTD.x + dMagiaTD.w >= dMob1.x && dMagiaTD.x <= dMob1.x + dMob1.w){
+			mob[1].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+	if (dMagiaTD.x + dMagiaTD.w >= dMob1.x && dMagiaTD.x <= dMob1.x + dMob1.w && Imunidade_Mob == 0){
+		if(dMagiaTD.y + dMagiaTD.h >= dMob1.y && dMagiaTD.y <= dMob1.y + dMob1.h){
+			mob[1].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}	
+	//MOB 2 ------------------------------------------------------------------------------
+	if (dMagiaLR.y + dMagiaLR.h >= dMob3.y && dMagiaLR.y <= dMob3.y + dMob3.w && Imunidade_Mob == 0){
+		if(dMagiaLR.x + dMagiaLR.w >= dMob3.x && dMagiaLR.x <= dMob3.x + dMob3.w){
+			mob[2].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+	if (dMagiaLR.x + dMagiaLR.w >= dMob3.x && dMagiaLR.x <= dMob3.x + dMob3.w && Imunidade_Mob == 0){
+		if(dMagiaLR.y + dMagiaLR.h >= dMob3.y && dMagiaLR.y <= dMob3.y + dMob3.h){
+			mob[2].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+
+	if (dMagiaTD.y + dMagiaTD.h >= dMob3.y && dMagiaTD.y <= dMob3.y + dMob3.w && Imunidade_Mob == 0){
+		if(dMagiaTD.x + dMagiaTD.w >= dMob3.x && dMagiaTD.x <= dMob3.x + dMob3.w){
+			mob[2].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+	if (dMagiaTD.x + dMagiaTD.w >= dMob3.x && dMagiaTD.x <= dMob3.x + dMob3.w && Imunidade_Mob == 0){
+		if(dMagiaTD.y + dMagiaTD.h >= dMob3.y && dMagiaTD.y <= dMob3.y + dMob3.h){
+			mob[2].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+
+	//MOB 3 -----------------------------------------------------------------------------
+	if (dMagiaLR.y + dMagiaLR.h >= dMob4.y && dMagiaLR.y <= dMob4.y + dMob4.w && Imunidade_Mob == 0){
+		if(dMagiaLR.x + dMagiaLR.w >= dMob4.x && dMagiaLR.x <= dMob4.x + dMob4.w){
+			mob[3].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+	if (dMagiaLR.x + dMagiaLR.w >= dMob4.x && dMagiaLR.x <= dMob4.x + dMob4.w && Imunidade_Mob == 0){
+		if(dMagiaLR.y + dMagiaLR.h >= dMob4.y && dMagiaLR.y <= dMob4.y + dMob4.h){
+			mob[3].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+
+	if (dMagiaTD.y + dMagiaTD.h >= dMob4.y && dMagiaTD.y <= dMob4.y + dMob4.w && Imunidade_Mob == 0){
+		if(dMagiaTD.x + dMagiaTD.w >= dMob4.x && dMagiaTD.x <= dMob4.x + dMob4.w){
+			mob[3].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+	if (dMagiaTD.x + dMagiaTD.w >= dMob4.x && dMagiaTD.x <= dMob4.x + dMob4.w && Imunidade_Mob == 0){
+		if(dMagiaTD.y + dMagiaTD.h >= dMob4.y && dMagiaTD.y <= dMob4.y + dMob4.h){
+			mob[3].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+
+	//MOB 4 ------------------------------------------------------------------------------
+	if (dMagiaLR.y + dMagiaLR.h >= dMob5.y && dMagiaLR.y <= dMob5.y + dMob5.w && Imunidade_Mob == 0){
+		if(dMagiaLR.x + dMagiaLR.w >= dMob5.x && dMagiaLR.x <= dMob5.x + dMob5.w){
+			mob[4].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+	if (dMagiaLR.x + dMagiaLR.w >= dMob5.x && dMagiaLR.x <= dMob5.x + dMob5.w && Imunidade_Mob == 0){
+		if(dMagiaLR.y + dMagiaLR.h >= dMob5.y && dMagiaLR.y <= dMob5.y + dMob5.h){
+			mob[4].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaLR.x = -500;
+
+		}
+	}
+
+	if (dMagiaTD.y + dMagiaTD.h >= dMob5.y && dMagiaTD.y <= dMob5.y + dMob5.w && Imunidade_Mob == 0){
+		if(dMagiaTD.x + dMagiaTD.w >= dMob5.x && dMagiaTD.x <= dMob5.x + dMob5.w){
+			mob[4].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+	if (dMagiaTD.x + dMagiaTD.w >= dMob5.x && dMagiaTD.x <= dMob5.x + dMob5.w && Imunidade_Mob == 0){
+		if(dMagiaTD.y + dMagiaTD.h >= dMob5.y && dMagiaTD.y <= dMob5.y + dMob5.h){
+			mob[4].Vida -= 5;
+			Imunidade_Mob = 50;
+			dMagiaTD.x = -500;
+
+		}
+	}
+}
+
+void Inimigo_Morto(){
+
+	if(mob[0].Vida <= 0)
+		dEsqueleto.x = -200;
+
+	if(mob[1].Vida <= 0)
+		dMob1.x = -200;
+
+	if(mob[2].Vida <= 0)
+		dMob3.x = -200;
+
+	if(mob[3].Vida <= 0)
+		dMob4.x = -200;
+
+	if(mob[4].Vida <= 0)
+		dMob5.x = -200;
+}
+
+void Reset(){
+
+	seletor = 0; menu = 1, how = 1, rank = 1, cred = 1;
+	escolha = 0; pause = 1;
+	again = 0; morreu = 0;
+	Muda_Mapa = 1;
+	LARGURA = 3264;
+	ALTURA = 1920;
+	LIMITE = 8;
+	SPEED = 2;
+	Play = true, Ataque = false;
+	Limitador = 0;
+	Passos = 1;
+	Imunidade = 0, Imunidade_Mob = 0;
+	Contador = 0;
+	Contador_Ataque = 0;
+	Limitador_Ataque = 0;
+	Pos_Ataque;
+	esquerda = false; direita = false; cima = false; baixo = false;
+	colidiu = false;
+
+
+	dMagiaLR.x = -100; dMagiaLR.y = -100; dMagiaLR.w = 60; dMagiaLR.h = 30;
+	dMagiaTD.x = -100; dMagiaTD.y = -100; dMagiaTD.w = 30; dMagiaTD.h = 60;
+
+	sMagiaLR.x = 0; sMagiaLR.y = 0; sMagiaLR.w = 30; sMagiaLR.h = 15;
+	sMagiaTD.x = 0; sMagiaTD.y = 0; sMagiaTD.w = 15; sMagiaTD.h = 30;
+	
+	sVida.x = 0; sVida.y = 0; sVida.w = 800; sVida.h = 600;
+	dVida.x = 0; dVida.y = 0; dVida.w = 800; dVida.h = 600;
+
+	sEsqueleto.x = 0; sEsqueleto.y = 0; sEsqueleto.w = PLAYER_W; sEsqueleto.h = PLAYER_H;
+	dEsqueleto.x = JANELA_W; dEsqueleto.y = JANELA_H; dEsqueleto.w = 55; dEsqueleto.h = 75;
+
+	dMob1.x = JANELA_W; dMob1.y = JANELA_H; dMob1.w = 55; dMob1.h = 75;
+	dMob3.x = JANELA_W; dMob3.y = JANELA_H; dMob3.w = 55; dMob3.h = 75;
+	dMob4.x = JANELA_W; dMob4.y = JANELA_H; dMob4.w = 55; dMob4.h = 75;
+	dMob5.x = JANELA_W; dMob5.y = JANELA_H; dMob5.w = 55; dMob5.h = 75;
+
+	sMob1.x = 0; sMob1.y = 0; sMob1.w = PLAYER_W; sMob1.h = PLAYER_H;
+	sMob3.x = 0; sMob3.y = 0; sMob3.w = PLAYER_W; sMob3.h = PLAYER_H;
+	sMob4.x = 0; sMob4.y = 0; sMob4.w = PLAYER_W; sMob4.h = PLAYER_H;
+	sMob5.x = 0; sMob5.y = 0; sMob5.w = PLAYER_W; sMob5.h = PLAYER_H;
+
+	sPlayer.x = 0; sPlayer.y = 0; sPlayer.w = PLAYER_W; sPlayer.h = PLAYER_H;
+	dPlayer.x = JANELA_W/2; dPlayer.y = JANELA_H/2; dPlayer.w = 55; dPlayer.h = 75;
+
+	sCamera.x = 424; sCamera.y = 930; sCamera.w = 272; sCamera.h = 160;
+	dCamera.x = 0; dCamera.y = 0; dCamera.w = 800; dCamera.h = 600;
 }
