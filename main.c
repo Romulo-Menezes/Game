@@ -29,6 +29,7 @@ bool Play = true;
 
 int Limitador = 0;
 int Passos = 1;
+int Imunidade = 0;
 
 bool esquerda = false, direita = false, cima = false, baixo = false;
 bool colidiu = false;
@@ -90,16 +91,15 @@ SDL_Rect sBox = {0, 0, 228, 38}; // Sprites da Caixa
 SDL_Rect dBox = {285, 320, 228, 38}; // Posição X, Posição Y, Tamanho // OBS: SE MEXER AQUI TEM QUE MEXER NO SWITCH DO SELETOR TBM
 
 
-
 typedef struct
 {
 	int Px;
 	int Py;
 	int Vida;	
-} Jogador;
+} Entidade;
 
 
-Jogador player, mob;
+Entidade player, mob[5];
 
 bool Inicio();
 bool Render_Janela ();
@@ -122,6 +122,7 @@ void Render_HowPlay ();
 void Destruir_Menu ();
 void Inimigo ();
 void Inimigo_Anda();
+void Colisao_Inimigo();
 void MudancaDeMapa();
 //----------------------------------------------------------------------------------------------
 
@@ -135,7 +136,14 @@ int main (){
 
 	player.Px = dPlayer.x + sCamera.x;
 	player.Py = dPlayer.y + sCamera.y;
-	player.Vida = 10;
+	player.Vida = 30;
+
+	mob[0].Vida = 15;
+	mob[1].Vida = 15;
+	mob[2].Vida = 15;
+	mob[3].Vida = 15;
+	mob[4].Vida = 15;
+
 
 	if (!Inicio()){
 
@@ -377,23 +385,31 @@ void Jogo_Inteiro (){
 			MudancaDeMapa();
 		
 			Andar_Tecla ();
-	}
+		}
 
-	Colisao_Fixa();
-	Andar_Logic ();
+		Colisao_Fixa();
+		Andar_Logic ();
 
-	if (colidiu == false)
-		Animation_Logic();
+		if (colidiu == false)
+			Animation_Logic();
 
-	Inimigo ();
-	Inimigo_Anda();
+		Inimigo ();
+		Inimigo_Anda();
+		Colisao_Inimigo();
 
-	Limitador++;
-	Passos++;
-	
-	FrameTime = SDL_GetTicks() - FrameStart;
-	if (FrameDelay > FrameTime){             
-		SDL_Delay(FrameDelay - FrameTime); 
+		if (player.Vida <= 0){
+			Play = false;
+		}
+
+		Limitador++;
+		Passos++;
+
+		if (Imunidade != 0)
+			Imunidade--;
+		
+		FrameTime = SDL_GetTicks() - FrameStart;
+		if (FrameDelay > FrameTime){             
+			SDL_Delay(FrameDelay - FrameTime); 
 	}
 }	
 
@@ -971,5 +987,74 @@ void Inimigo_Anda(){
 	}
 	else{
 		Passos = -80;
+	}
+}
+
+void Colisao_Inimigo (){
+
+	// MOB 0 
+	if (dPlayer.y >= dEsqueleto.y && dPlayer.y <= dEsqueleto.y + dEsqueleto.w && Imunidade == 0){
+		if(dPlayer.x + dPlayer.w >= dEsqueleto.x && dPlayer.x <= dEsqueleto.x + dEsqueleto.w){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	if (dPlayer.x >= dEsqueleto.x && dPlayer.x <= dEsqueleto.x + dEsqueleto.w && Imunidade == 0){
+		if(dPlayer.y + dPlayer.h >= dEsqueleto.y && dPlayer.y <= dEsqueleto.y + dEsqueleto.h){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	// MOB 1
+	if (dPlayer.y >= dMob1.y && dPlayer.y <= dMob1.y + dMob1.w && Imunidade == 0){
+		if(dPlayer.x + dPlayer.w >= dMob1.x && dPlayer.x <= dMob1.x + dMob1.w){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	if (dPlayer.x >= dMob1.x && dPlayer.x <= dMob1.x + dMob1.w && Imunidade == 0){
+		if(dPlayer.y + dPlayer.h >= dMob1.y && dPlayer.y <= dMob1.y + dMob1.h){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	//MOB 2
+	if (dPlayer.y >= dMob3.y && dPlayer.y <= dMob3.y + dMob3.w && Imunidade == 0){
+		if(dPlayer.x + dPlayer.w >= dMob3.x && dPlayer.x <= dMob3.x + dMob3.w){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	if (dPlayer.x >= dMob3.x && dPlayer.x <= dMob3.x + dMob3.w && Imunidade == 0){
+		if(dPlayer.y + dPlayer.h >= dMob3.y && dPlayer.y <= dMob3.y + dMob3.h){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	//MOB 3
+	if (dPlayer.y >= dMob4.y && dPlayer.y <= dMob4.y + dMob4.w && Imunidade == 0){
+		if(dPlayer.x + dPlayer.w >= dMob4.x && dPlayer.x <= dMob4.x + dMob4.w){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	if (dPlayer.x >= dMob4.x && dPlayer.x <= dMob4.x + dMob4.w && Imunidade == 0){
+		if(dPlayer.y + dPlayer.h >= dMob4.y && dPlayer.y <= dMob4.y + dMob4.h){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	//MOB 4
+	if (dPlayer.y >= dMob5.y && dPlayer.y <= dMob5.y + dMob5.w && Imunidade == 0){
+		if(dPlayer.x + dPlayer.w >= dMob5.x && dPlayer.x <= dMob5.x + dMob5.w){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
+	}
+	if (dPlayer.x >= dMob5.x && dPlayer.x <= dMob5.x + dMob5.w && Imunidade == 0){
+		if(dPlayer.y + dPlayer.h >= dMob5.y && dPlayer.y <= dMob5.y + dMob5.h){
+			player.Vida -= 5;
+			Imunidade = 100;
+		}
 	}
 }
