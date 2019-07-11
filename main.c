@@ -41,6 +41,7 @@ int Imunidade = 0, Imunidade_Mob = 0, Golem_M = 0, Golem_Vida = 10;
 int Boss_Vida = 20;
 
 int mob0 = 2, mob1 = 2, mob2 = 2, mob3 = 2, mob4 = 2;
+int Interacao = 0, Contador_Boss = 0, Contador_Golem = 0;
 
 int Contador = 0;
 int Contador_Ataque = 0;
@@ -226,6 +227,8 @@ void Colisa_Mundo3();
 void Boss_movimento();
 void Boss_Dano();
 void Boss_Hit();
+void NPC_Vila();
+void NPC_Interacao();
 //----------------------------------------------------------------------------------------------
 
 int main (){
@@ -554,6 +557,11 @@ void Jogo_Inteiro (){
 		Player_Ataque();
 		Movimento_Magia();
 
+		if(Muda_Mapa == 1){
+			NPC_Vila();
+			NPC_Interacao();
+		}
+
 		Inimigo ();
 		Inimigo_Anda();
 		Colisao_Inimigo();
@@ -568,9 +576,11 @@ void Jogo_Inteiro (){
 
 		Limitador++;
 		Contador ++;
+		Contador_Golem++;
+		Contador_Boss++;
 		Passos++;
 		//printf("C.x: %d C.w: %d\nC.y: %d C.h: %d\n\n",sCamera.x, sCamera.w +sCamera.x, sCamera.y, sCamera.h+sCamera.y);
-		printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
+		//printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
 		//printf("mob1: %d mob2: %d mob3: %d mob4: %d mob5: %d\n", mob0, mob1, mob2, mob3, mob4);
 
 
@@ -711,6 +721,7 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 	SDL_RenderClear(render);
 	if(Muda_Mapa == 1){
 		SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
+		SDL_RenderCopy (render, BOSS, &sBoss, &dBoss);
 		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
 
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
@@ -1177,6 +1188,8 @@ void MudancaDeMapa (){
 				sCamera.x = 0; sCamera.y = 0; sCamera.w = 400; sCamera.h = 300;
 
 				dPlayer.x = 374; dPlayer.y = 422;
+
+				dBoss.x = 374; dBoss.y = 100;
 
 				player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
 
@@ -1727,6 +1740,9 @@ void Reset(){
 	dGolem.y = JANELA_H/2;
 	Golem_Vida = 10;
 	sGolem.y = 0; sGolem.x = 0;
+	Boss_Vida = 20;
+	dBoss.x = JANELA_W; dBoss.y = JANELA_H/2;
+	Interacao = 0; Contador_Golem = 0; Contador_Boss = 0;
 }
 
 void Pos_Golem(){
@@ -1752,14 +1768,50 @@ void Pos_Golem(){
 
 void Golem_Movimento(){
 
-	if(Golem_M == 1 && dGolem.x > dPlayer.x)
+	if(Golem_M == 1 && dGolem.x > dPlayer.x){
 		dGolem.x -= 1;
-	if(Golem_M == 1 && dGolem.x < dPlayer.x)
+		sGolem.y = 53 * 2;
+		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x += 33;
+		}
+		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x = 0;
+			Contador_Golem = 0;
+		}
+	}
+	if(Golem_M == 1 && dGolem.x < dPlayer.x){
 		dGolem.x += 1;
-	if(Golem_M == 1 && dGolem.y > dPlayer.y && dGolem.x == dPlayer.x)
+		sGolem.y = 53 * 3;
+		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x += 33;
+		}
+		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x = 0;
+			Contador_Golem = 0;
+		}
+	}
+	if(Golem_M == 1 && dGolem.y > dPlayer.y && dGolem.x == dPlayer.x){
 		dGolem.y -= 1;
-	if(Golem_M == 1 && dGolem.y < dPlayer.y && dGolem.x == dPlayer.x)
+		sGolem.y = 53 * 1;
+		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x += 33;
+		}
+		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x = 0;
+			Contador_Golem = 0;
+		}
+	}
+	if(Golem_M == 1 && dGolem.y < dPlayer.y && dGolem.x == dPlayer.x){
 		dGolem.y += 1;
+		sGolem.y = 53 * 0;
+		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x += 33;
+		}
+		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+			sGolem.x = 0;
+			Contador_Golem = 0;
+		}
+	}
 
 	if (Golem_Vida == 10){
 		sVida_Golem.y = 0;
@@ -1851,14 +1903,50 @@ void Colisa_Mundo3(){
 
 void Boss_movimento(){
 
-	if(dBoss.x > dPlayer.x)
+	if(Boss_Vida > 0 && dBoss.x > dPlayer.x){
 		dBoss.x -= 1;
-	if(dBoss.x < dPlayer.x)
+		sBoss.y = 45 * 2;
+		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x += 25;
+		}
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x = 0;
+			Contador_Boss = 0;
+		}
+	}
+	if(Boss_Vida > 0 && dBoss.x < dPlayer.x){
 		dBoss.x += 1;
-	if (dBoss.y > dPlayer.y && dBoss.x == dPlayer.x)
+		sBoss.y = 45 * 3;
+		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x += 25;
+		}
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x = 0;
+			Contador_Boss = 0;
+		}
+	}
+	if (Boss_Vida > 0 && dBoss.y > dPlayer.y && dBoss.x == dPlayer.x){
 		dBoss.y -= 1;
-	if (dBoss.y < dPlayer.y && dBoss.x == dPlayer.x)
+		sBoss.y = 45 * 1;
+		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x += 25;
+		}
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x = 0;
+			Contador_Boss = 0;
+		}
+	}
+	if (Boss_Vida > 0 && dBoss.y < dPlayer.y && dBoss.x == dPlayer.x){
 		dBoss.y += 1;
+		sBoss.y = 45 * 0;
+		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x += 25;
+		}
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+			sBoss.x = 0;
+			Contador_Boss = 0;
+		}
+	}
 
 	if (Boss_Vida == 20)
 		sVida_Boss.y = 0;
@@ -1882,6 +1970,7 @@ void Boss_movimento(){
 		sVida_Boss.y = 5400;
 	if(Boss_Vida <= 0){
 		// Fim do Jogo
+
 	}
 
 }
@@ -1929,6 +2018,52 @@ void Boss_Hit(){
 		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
 			player.Vida -= 15;
 			Imunidade = 100;
+		}
+	}
+}
+
+void NPC_Vila(){
+
+	if(Golem_Vida > 0 && player.Px >= 1582 && player.Py >= 1824 && player.Py <= 1914 && player.Px <= 2134){
+
+		if (direita == true && esquerda == false && cima == false && baixo == false)
+			dBoss.x -= SPEED*3;
+
+		if (esquerda == true && direita == false && cima == false && baixo == false)
+			dBoss.x += SPEED*3;
+
+		if(cima == true && esquerda == false && direita == false && baixo == false)
+			dBoss.y += SPEED*4;
+
+		if(baixo == true && esquerda == false && direita == false && cima == false)
+			dBoss.y -= SPEED*4;
+
+		else if (player.Px < 1582){
+			dBoss.x = JANELA_W;
+			dBoss.y = JANELA_H/2;
+		}
+		else if (player.Px > 2134){
+			dBoss.x = -10 - dBoss.w;
+			dBoss.y = JANELA_H/2;		
+		}
+	}
+}
+
+void NPC_Interacao(){
+
+	if (Interacao == 0 && dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
+		if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
+			// cria uma função de dialogo e coloca aqui e ali em baixo
+			printf("Qual foi corno?\n");
+			Interacao++;
+		}
+	}
+
+	if (Interacao == 0 && dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
+		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
+			// aqui é o ali em baixo, é pra colocar a funçao aqui tbm.
+			printf("Qual foi corno?\n");
+			Interacao++;
 		}
 	}
 }
