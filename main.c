@@ -38,6 +38,9 @@ bool Play = true, Ataque = false;
 int Limitador = 0;
 int Passos = 1;
 int Imunidade = 0, Imunidade_Mob = 0, Golem_M = 0, Golem_Vida = 10;
+int Boss_Vida = 20;
+
+int mob0 = 2, mob1 = 2, mob2 = 2, mob3 = 2, mob4 = 2;
 
 int Contador = 0;
 int Contador_Ataque = 0;
@@ -75,6 +78,8 @@ SDL_Texture* Golem;
 SDL_Surface* BOSS_S;
 SDL_Texture* BOSS;
 
+SDL_Rect sBoss = {0, 0, 25, 45};
+SDL_Rect dBoss = {374, 100, 55, 75};
 SDL_Rect sGolem = {0 , 0, 33, 53};
 SDL_Rect dGolem = {-1240, -780, 95, 115};
 
@@ -95,11 +100,15 @@ SDL_Surface* HUD_Surface;
 SDL_Surface* Vida_Surface;
 SDL_Surface* Chave_S;
 SDL_Surface* Vida_Golem_S;
+SDL_Surface* Vida_Boss_S;
+
 SDL_Texture* HUD;
 SDL_Texture* Vida;
 SDL_Texture* Chave_T;
 SDL_Texture* Vida_Golem_T;
+SDL_Texture* Vida_Boss_T;
 
+SDL_Rect sVida_Boss = {0, 0, 800, 600};
 SDL_Rect sVida_Golem = {0, 0, 800, 600};
 SDL_Rect dVida_Golem = {0, 0, 800, 600};
 SDL_Rect sVida = {0, 0, 800, 600};
@@ -174,7 +183,7 @@ typedef struct
 } Entidade;
 
 
-Entidade player, mob[5];
+Entidade player;
 
 bool Inicio();
 bool Render_Janela ();
@@ -213,6 +222,10 @@ void Pos_Golem();
 void Golem_Movimento();
 void Golem_Hit();
 void Golem_Dano();
+void Colisa_Mundo3();
+void Boss_movimento();
+void Boss_Dano();
+void Boss_Hit();
 //----------------------------------------------------------------------------------------------
 
 int main (){
@@ -488,15 +501,11 @@ void Jogo_Inteiro (){
 	player.Py = dPlayer.y + sCamera.y;
 	player.Vida = 30;
 
-	mob[0].Vida = 2;
-	mob[1].Vida = 2;
-	mob[2].Vida = 2;
-	mob[3].Vida = 2;
-	mob[4].Vida = 2;
+	mob0 = 2; mob1 = 2;	mob2 = 2; mob3 = 2;	mob4 = 2;
 
 	Play = true;
 	Musicas_Tops();
-	const float FPS = 45;                    // // // // // //
+	const float FPS = 60;                    // // // // // //
 	const float FrameDelay = 1000/FPS;      //  Frame Per  //
 	unsigned long FrameStart;              //    Second   //
 	float FrameTime;                      // // // // // //
@@ -524,17 +533,23 @@ void Jogo_Inteiro (){
 
 		Ataque_False();
 
-		if (Muda_Mapa != 3)
+		if (Muda_Mapa != 3){
 			Colisao_Fixa();
-
-
+		}
+		if (Muda_Mapa == 3){
+			Colisa_Mundo3();
+			Boss_movimento();
+			Boss_Dano();
+			Boss_Hit();
+		}
 		Andar_Logic ();
 		Pos_Golem();
 		Golem_Movimento();
 		Golem_Hit();
 
-		if (colidiu == false)
+		if (colidiu == false){
 			Animation_Logic();
+		}
 
 		Player_Ataque();
 		Movimento_Magia();
@@ -542,7 +557,6 @@ void Jogo_Inteiro (){
 		Inimigo ();
 		Inimigo_Anda();
 		Colisao_Inimigo();
-		Inimigo_Dano();
 		Inimigo_Morto();
 		Muda_Vida();
 
@@ -557,7 +571,7 @@ void Jogo_Inteiro (){
 		Passos++;
 		//printf("C.x: %d C.w: %d\nC.y: %d C.h: %d\n\n",sCamera.x, sCamera.w +sCamera.x, sCamera.y, sCamera.h+sCamera.y);
 		printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
-		printf("G X: %d G Y: %d G V: %d\n", dGolem.x, dGolem.y, Golem_Vida);
+		//printf("mob1: %d mob2: %d mob3: %d mob4: %d mob5: %d\n", mob0, mob1, mob2, mob3, mob4);
 
 
 		if(Limitador_Ataque == 1)
@@ -678,10 +692,13 @@ void Obter_Fundo (void){ //Imagem de fundo
 	Vida_Surface = IMG_Load("Resources/Image/Vida.png");
 	Vida_Golem_S = IMG_Load("Resources/Image/Vida_Golem.png");
 	Chave_S = IMG_Load("Resources/Image/Chave.png");
+	Vida_Boss_S =IMG_Load("Resources/Image/Boss_Vida.png");
+
 	HUD = SDL_CreateTextureFromSurface(render, HUD_Surface);
 	Vida = SDL_CreateTextureFromSurface(render, Vida_Surface);
 	Vida_Golem_T = SDL_CreateTextureFromSurface(render, Vida_Golem_S);
 	Chave_T = SDL_CreateTextureFromSurface(render, Chave_S);
+	Vida_Boss_T = SDL_CreateTextureFromSurface (render, Vida_Boss_S);
 
 	Image_MenuMorte = IMG_Load("Resources/Image/MorteMenu.png");
 	Text_MenuMorte = SDL_CreateTextureFromSurface(render, Image_MenuMorte);
@@ -739,11 +756,17 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 		SDL_RenderCopy(render,Sala_Final, &sCamera, &dCamera);
 		SDL_RenderCopy(render, PlayerTexture, &sPlayer, &dPlayer);
 
+		SDL_RenderCopy (render, BOSS, &sBoss, &dBoss);
+
 		SDL_RenderCopy(render, MagicaLR, &sMagiaLR, &dMagiaLR); // esquerda e direita
 		SDL_RenderCopy(render, MagicaTD, &sMagiaTD, &dMagiaTD); // cima e baixo
 
 		SDL_RenderCopy (render, Vida, &sVida, &dVida);
 		SDL_RenderCopy (render, HUD, NULL, NULL);
+
+		if (Boss_Vida > 0)
+			SDL_RenderCopy (render, Vida_Boss_T, &sVida_Boss, &dVida_Golem);
+
 		if (player.Chave == 1)
 			SDL_RenderCopy(render, Chave_T, NULL, NULL);
 
@@ -767,7 +790,7 @@ bool XPlayer (void){
 	GolemS = IMG_Load("Resources/Sprites/Golem.png");
 	Golem = SDL_CreateTextureFromSurface(render, GolemS);
 
-	BOSS_S = IMG_Load("Resources/Sprites/Boss.png");
+	BOSS_S = IMG_Load("Resources/Sprites/boss.png");
 	BOSS = SDL_CreateTextureFromSurface(render, BOSS_S);
 
 }
@@ -1082,6 +1105,15 @@ void Colisao_Fixa(){
 
 		fclose(C_down);
 	}
+
+	if (Golem_Vida > 0 && direita == true && player.Px == 2318 && player.Py >= 0 && player.Py <= 666){
+			SPEED = 0;
+			colidiu = true;
+		}
+	else if (Golem_Vida <= 0 && direita == true && player.Px == 2318 && player.Py >= 0 && player.Py <= 666){
+		SPEED = 2;
+		colidiu = false;
+		}
 }
 
 void MudancaDeMapa (){
@@ -1144,6 +1176,8 @@ void MudancaDeMapa (){
 
 				sCamera.x = 0; sCamera.y = 0; sCamera.w = 400; sCamera.h = 300;
 
+				dPlayer.x = 374; dPlayer.y = 422;
+
 				player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
 
 				SPEED = 2;
@@ -1154,15 +1188,17 @@ void MudancaDeMapa (){
 
 void Inimigo(){
 
-	if(mob[0].Vida > 0 && sCamera.x >= 408 && sCamera.x +sCamera.w <= 952 && sCamera.y >= 26 && sCamera.y + sCamera.h <= 346){
-		if (direita == true)
+	if(mob0 > 0 && sCamera.x >= 408 && sCamera.x +sCamera.w <= 952 && sCamera.y >= 26 && sCamera.y + sCamera.h <= 346){
+		if (direita == true && esquerda == false && cima == false && baixo == false)
 			dEsqueleto.x -= SPEED*3;
-		if (esquerda == true)
+		if (esquerda == true && direita == false && cima == false && baixo == false)
 			dEsqueleto.x += SPEED*3;
-		if(cima == true)
+		if (cima == true && baixo == false && direita == false && esquerda == false)
 			dEsqueleto.y += SPEED*4;
-		if(baixo == true)
+		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dEsqueleto.y -= SPEED*4;
+
+		Inimigo_Dano(&dEsqueleto, &mob0);
 	}
 	else if (sCamera.x < 408){
 		dEsqueleto.x = JANELA_W;
@@ -1173,15 +1209,16 @@ void Inimigo(){
 		dEsqueleto.y = JANELA_H/2;		
 	}
 
-	if(mob[1].Vida > 0 && sCamera.x >= 854 && sCamera.x +sCamera.w <= 1398 && sCamera.y >= 124 && sCamera.y + sCamera.h <= 444){
-		if (direita == true)
+	if(mob1 > 0 && sCamera.x >= 854 && sCamera.x +sCamera.w <= 1398 && sCamera.y >= 124 && sCamera.y + sCamera.h <= 444){
+		if (direita == true && esquerda == false && cima == false && baixo == false)
 			dMob1.x -= SPEED*3;
-		if (esquerda == true)
+		if (esquerda == true && direita == false && cima == false && baixo == false)
 			dMob1.x += SPEED*3;
-		if(cima == true)
+		if (cima == true && baixo == false && direita == false && esquerda == false)
 			dMob1.y += SPEED*4;
-		if(baixo == true)
+		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob1.y -= SPEED*4;
+		Inimigo_Dano(&dMob1, &mob1);
 	}
 	else if (sCamera.x < 854){
 		dMob1.x = JANELA_W;
@@ -1192,15 +1229,16 @@ void Inimigo(){
 		dMob1.y = JANELA_H/2;	
 	}
 
-	if(mob[2].Vida > 0 && sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
-		if (direita == true)
+	if(mob2 > 0 && sCamera.x >= 2470 && sCamera.x +sCamera.w <= 3182 && sCamera.y >= 256 && sCamera.y + sCamera.h <= 582){
+		if (direita == true && esquerda == false && cima == false && baixo == false)
 			dMob3.x -= SPEED*3;
-		if (esquerda == true)
+		if (esquerda == true && direita == false && cima == false && baixo == false)
 			dMob3.x += SPEED*3;
-		if(cima == true)
+		if (cima == true && baixo == false && direita == false && esquerda == false)
 			dMob3.y += SPEED*4;
-		if(baixo == true)
+		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob3.y -= SPEED*4;
+		Inimigo_Dano(&dMob3, &mob2);
 	}
 	else if (sCamera.x < 2470){
 		dMob3.x = JANELA_W;
@@ -1211,15 +1249,16 @@ void Inimigo(){
 		dMob3.y = JANELA_H/2 + 150;		
 	}
 
-	if(mob[3].Vida > 0 && sCamera.x >= 228  && sCamera.x +sCamera.w <= 772 && sCamera.y >= 1584 && sCamera.y + sCamera.h <= 1956){
-		if (direita == true)
+	if(mob3 > 0 && sCamera.x >= 228  && sCamera.x +sCamera.w <= 772 && sCamera.y >= 1584 && sCamera.y + sCamera.h <= 1956){
+		if (direita == true && esquerda == false && cima == false && baixo == false)
 			dMob4.x -= SPEED*3;
-		if (esquerda == true)
+		if (esquerda == true && direita == false && cima == false && baixo == false)
 			dMob4.x += SPEED*3;
-		if(cima == true)
+		if (cima == true && baixo == false && direita == false && esquerda == false)
 			dMob4.y += SPEED*4;
-		if(baixo == true)
+		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob4.y -= SPEED*4;
+		Inimigo_Dano(&dMob4, &mob3);
 	}
 	else if (sCamera.x < 228){
 		dMob4.x = JANELA_W;
@@ -1230,15 +1269,16 @@ void Inimigo(){
 		dMob4.y = JANELA_H/2;	
 	}
 
-	if(mob[4].Vida > 0 && sCamera.x >= 2182  && sCamera.x +sCamera.w <= 2726 && sCamera.y >= 1582 && sCamera.y + sCamera.h <= 1920){
-		if (direita == true)
+	if(mob4 > 0 && sCamera.x >= 2182  && sCamera.x +sCamera.w <= 2726 && sCamera.y >= 1582 && sCamera.y + sCamera.h <= 1920){
+		if (direita == true && esquerda == false && cima == false && baixo == false)
 			dMob5.x -= SPEED*3;
-		if (esquerda == true)
+		if (esquerda == true && direita == false && cima == false && baixo == false)
 			dMob5.x += SPEED*3;
-		if(cima == true)
+		if (cima == true && baixo == false && direita == false && esquerda == false)
 			dMob5.y += SPEED*4;
-		if(baixo == true)
-			dMob5.y -= SPEED*4;;
+		if (baixo == true && cima == false && direita == false && esquerda == false)
+			dMob5.y -= SPEED*4;
+		Inimigo_Dano(&dMob5, &mob4);
 	}
 	else if (sCamera.x < 2182){
 		dMob5.x = JANELA_W;
@@ -1248,8 +1288,8 @@ void Inimigo(){
 		dMob5.x = -10 - dMob1.w;
 		dMob5.y = JANELA_H/2;	
 	}
-}
 
+}
 void Inimigo_Anda(){
 
 	if (Passos <= 80){
@@ -1577,176 +1617,37 @@ void Ataque_False(){
 
 }
 
-void Inimigo_Dano(){
+void Inimigo_Dano(SDL_Rect *mob, int *vida){
 
-	// MOB 0 
-	if (dMagiaLR.y + dMagiaLR.h  >= dEsqueleto.y && dMagiaLR.y <= dEsqueleto.y + dEsqueleto.h && Imunidade_Mob == 0){
-		if(dMagiaLR.x + dMagiaLR.w >= dEsqueleto.x && dMagiaLR.x <= dEsqueleto.x + dEsqueleto.w){
-			mob[0].Vida -= 1;
+	if (dMagiaLR.y + dMagiaLR.h  >= mob->y && dMagiaLR.y <= mob->y + mob->h && Imunidade_Mob == 0){
+		if(dMagiaLR.x + dMagiaLR.w >= mob->x && dMagiaLR.x <= mob->x + mob->w){
+			*vida -= 1;
 			Imunidade_Mob = 50;
 			dMagiaLR.x = -500;
 		}
 	}
-	if (dMagiaLR.x + dMagiaLR.w >= dEsqueleto.x && dMagiaLR.x <= dEsqueleto.x + dEsqueleto.w && Imunidade_Mob == 0){
-		if(dMagiaLR.y + dMagiaLR.h >= dEsqueleto.y && dMagiaLR.y <= dEsqueleto.y + dEsqueleto.h){
-			mob[0].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -500;
-
-		}
-	}
-
-	if (dMagiaTD.y + dMagiaTD.h >= dEsqueleto.y && dMagiaTD.y <= dEsqueleto.y + dEsqueleto.h && Imunidade_Mob == 0){
-		if(dMagiaTD.x + dMagiaTD.w >= dEsqueleto.x && dMagiaTD.x <= dEsqueleto.x + dEsqueleto.w){
-			mob[0].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -500;
-
-		}
-	}
-	if (dMagiaTD.x + dMagiaTD.w >= dEsqueleto.x && dMagiaTD.x <= dEsqueleto.x + dEsqueleto.w && Imunidade_Mob == 0){
-		if(dMagiaTD.y + dMagiaTD.h >= dEsqueleto.y && dMagiaTD.y <= dEsqueleto.y + dEsqueleto.h){
-			mob[0].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -500;
-
-		}
-	}
-	// MOB 1 -----------------------------------------------------------------------------
-	if (dMagiaLR.y + dMagiaLR.h >= dMob1.y && dMagiaLR.y <= dMob1.y + dMob1.h && Imunidade_Mob == 0){
-		if(dMagiaLR.x + dMagiaLR.w >= dMob1.x && dMagiaLR.x <= dMob1.x + dMob1.w){
-			mob[1].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -500;
-
-		}
-	}
-	if (dMagiaLR.x + dMagiaLR.w >= dMob1.x && dMagiaLR.x <= dMob1.x + dMob1.x && Imunidade_Mob == 0){
-		if(dMagiaLR.y + dMagiaLR.h >= dMob1.y && dMagiaLR.y <= dMob1.y + dMob1.h){
-			mob[1].Vida -= 1;
+	else if (dMagiaLR.x + dMagiaLR.w >= mob->x && dMagiaLR.x <= mob->x + mob->w && Imunidade_Mob == 0){
+		if(dMagiaLR.y + dMagiaLR.h >= mob->y && dMagiaLR.y <= mob->y + mob->h){
+			*vida -= 1;
 			Imunidade_Mob = 50;
 			dMagiaLR.x = -500;
 
 		}
 	}
 
-	if (dMagiaTD.y + dMagiaTD.h >= dMob1.y && dMagiaTD.y <= dMob1.y + dMob1.h && Imunidade_Mob == 0){
-		if(dMagiaTD.x + dMagiaTD.w >= dMob1.x && dMagiaTD.x <= dMob1.x + dMob1.w){
-			mob[1].Vida -= 1;
+	else if (dMagiaTD.y + dMagiaTD.h >= mob->y && dMagiaTD.y <= mob->y + mob->h && Imunidade_Mob == 0){
+		if(dMagiaTD.x + dMagiaTD.w >= mob->x && dMagiaTD.x <= mob->x + mob->w){
+			*vida -= 1;
 			Imunidade_Mob = 50;
 			dMagiaTD.x = -500;
 
 		}
 	}
-	if (dMagiaTD.x + dMagiaTD.w >= dMob1.x && dMagiaTD.x <= dMob1.x + dMob1.w && Imunidade_Mob == 0){
-		if(dMagiaTD.y + dMagiaTD.h >= dMob1.y && dMagiaTD.y <= dMob1.y + dMob1.h){
-			mob[1].Vida -= 1;
+	else if (dMagiaTD.x + dMagiaTD.w >= mob->x && dMagiaTD.x <= mob->x + mob->w && Imunidade_Mob == 0){
+		if(dMagiaTD.y + dMagiaTD.h >= mob->y && dMagiaTD.y <= mob->y + mob->h){
+			*vida -= 1;
 			Imunidade_Mob = 50;
 			dMagiaTD.x = -500;
-
-		}
-	}	
-	//MOB 2 ------------------------------------------------------------------------------
-	if (dMagiaLR.y + dMagiaLR.h >= dMob3.y && dMagiaLR.y <= dMob3.y + dMob3.h && Imunidade_Mob == 0){
-		if(dMagiaLR.x + dMagiaLR.w >= dMob3.x && dMagiaLR.x <= dMob3.x + dMob3.w){
-			mob[2].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -5000;
-
-		}
-	}
-	if (dMagiaLR.x + dMagiaLR.w >= dMob3.x && dMagiaLR.x <= dMob3.x + dMob3.w && Imunidade_Mob == 0){
-		if(dMagiaLR.y + dMagiaLR.h >= dMob3.y && dMagiaLR.y <= dMob3.y + dMob3.h){
-			mob[2].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -5000;
-
-		}
-	}
-
-	if (dMagiaTD.y + dMagiaTD.h >= dMob3.y && dMagiaTD.y <= dMob3.y + dMob3.h && Imunidade_Mob == 0){
-		if(dMagiaTD.x + dMagiaTD.w >= dMob3.x && dMagiaTD.x <= dMob3.x + dMob3.w){
-			mob[2].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -5000;
-
-		}
-	}
-	if (dMagiaTD.x + dMagiaTD.w >= dMob3.x && dMagiaTD.x <= dMob3.x + dMob3.w && Imunidade_Mob == 0){
-		if(dMagiaTD.y + dMagiaTD.h >= dMob3.y && dMagiaTD.y <= dMob3.y + dMob3.h){
-			mob[2].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -500;
-
-		}
-	}
-
-	//MOB 3 -----------------------------------------------------------------------------
-	if (dMagiaLR.y + dMagiaLR.h >= dMob4.y && dMagiaLR.y <= dMob4.y + dMob4.h && Imunidade_Mob == 0){
-		if(dMagiaLR.x + dMagiaLR.w >= dMob4.x && dMagiaLR.x <= dMob4.x + dMob4.w){
-			mob[3].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -5000;
-
-		}
-	}
-	if (dMagiaLR.x + dMagiaLR.w >= dMob4.x && dMagiaLR.x <= dMob4.x + dMob4.w && Imunidade_Mob == 0){
-		if(dMagiaLR.y + dMagiaLR.h >= dMob4.y && dMagiaLR.y <= dMob4.y + dMob4.h){
-			mob[3].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -5000;
-
-		}
-	}
-
-	if (dMagiaTD.y + dMagiaTD.h >= dMob4.y && dMagiaTD.y <= dMob4.y + dMob4.h && Imunidade_Mob == 0){
-		if(dMagiaTD.x + dMagiaTD.w >= dMob4.x && dMagiaTD.x <= dMob4.x + dMob4.w){
-			mob[3].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -5000;
-
-		}
-	}
-	if (dMagiaTD.x + dMagiaTD.w >= dMob4.x && dMagiaTD.x <= dMob4.x + dMob4.w && Imunidade_Mob == 0){
-		if(dMagiaTD.y + dMagiaTD.h >= dMob4.y && dMagiaTD.y <= dMob4.y + dMob4.h){
-			mob[3].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -5000;
-
-		}
-	}
-
-	//MOB 4 ------------------------------------------------------------------------------
-	if (dMagiaLR.y + dMagiaLR.h >= dMob5.y && dMagiaLR.y <= dMob5.y + dMob5.h && Imunidade_Mob == 0){
-		if(dMagiaLR.x + dMagiaLR.w >= dMob5.x && dMagiaLR.x <= dMob5.x + dMob5.w){
-			mob[4].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -5000;
-
-		}
-	}
-	if (dMagiaLR.x + dMagiaLR.w >= dMob5.x && dMagiaLR.x <= dMob5.x + dMob5.w && Imunidade_Mob == 0){
-		if(dMagiaLR.y + dMagiaLR.h >= dMob5.y && dMagiaLR.y <= dMob5.y + dMob5.h){
-			mob[4].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaLR.x = -5000;
-
-		}
-	}
-
-	if (dMagiaTD.y + dMagiaTD.h >= dMob5.y && dMagiaTD.y <= dMob5.y + dMob5.h && Imunidade_Mob == 0){
-		if(dMagiaTD.x + dMagiaTD.w >= dMob5.x && dMagiaTD.x <= dMob5.x + dMob5.w){
-			mob[4].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -5000;
-
-		}
-	}
-	if (dMagiaTD.x + dMagiaTD.w >= dMob5.x && dMagiaTD.x <= dMob5.x + dMob5.w && Imunidade_Mob == 0){
-		if(dMagiaTD.y + dMagiaTD.h >= dMob5.y && dMagiaTD.y <= dMob5.y + dMob5.h){
-			mob[4].Vida -= 1;
-			Imunidade_Mob = 50;
-			dMagiaTD.x = -5000;
 
 		}
 	}
@@ -1754,24 +1655,25 @@ void Inimigo_Dano(){
 
 void Inimigo_Morto(){
 
-	if(mob[0].Vida <= 0)
+	if(mob0 <= 0)
 		dEsqueleto.x = -200;
 
-	if(mob[1].Vida <= 0)
+	if(mob1 <= 0)
 		dMob1.x = -200;
 
-	if(mob[2].Vida <= 0)
+	if(mob2 <= 0)
 		dMob3.x = -200;
 
-	if(mob[3].Vida <= 0)
+	if(mob3 <= 0)
 		dMob4.x = -200;
 
-	if(mob[4].Vida <= 0)
+	if(mob4 <= 0)
 		dMob5.x = -200;
 }
 
 void Reset(){
 
+	Boss_Vida = 20;
 	player.Chave = 0;
 	seletor = 0; menu = 1, how = 1, rank = 1, cred = 1;
 	escolha = 0; pause = 1;
@@ -1824,7 +1726,7 @@ void Reset(){
 	dGolem.x = -10 - dGolem.w;
 	dGolem.y = JANELA_H/2;
 	Golem_Vida = 10;
-	sGolem.y = 0;
+	sGolem.y = 0; sGolem.x = 0;
 }
 
 void Pos_Golem(){
@@ -1837,10 +1739,10 @@ void Pos_Golem(){
 			dGolem.y += SPEED*4;
 		if(baixo == true && esquerda == false && direita == false && cima == false)
 			dGolem.y -= SPEED*4;
+
 		Golem_M = 1;
 
 		Golem_Dano();
-
 	}
 	else{
 		Golem_M = 0;
@@ -1854,11 +1756,14 @@ void Golem_Movimento(){
 		dGolem.x -= 1;
 	if(Golem_M == 1 && dGolem.x < dPlayer.x)
 		dGolem.x += 1;
-	if(Golem_M == 1 && dGolem.y > dPlayer.y)
+	if(Golem_M == 1 && dGolem.y > dPlayer.y && dGolem.x == dPlayer.x)
 		dGolem.y -= 1;
-	if(Golem_M == 1 && dGolem.y < dPlayer.y)
+	if(Golem_M == 1 && dGolem.y < dPlayer.y && dGolem.x == dPlayer.x)
 		dGolem.y += 1;
 
+	if (Golem_Vida == 10){
+		sVida_Golem.y = 0;
+	}
 	if (Golem_Vida == 8){
 		sVida_Golem.y = 600;
 	}
@@ -1921,6 +1826,109 @@ void Golem_Dano(){
 		if (dMagiaTD.x + dMagiaTD.w >= dGolem.x && dMagiaTD.x <= dGolem.x + dGolem.w){
 			Golem_Vida -= 1;
 			Imunidade_Mob = 200;
+		}
+	}
+}
+
+void Colisa_Mundo3(){
+
+	if (esquerda == true && player.Px == 52 && player.Py >=0 && player.Py <= 600){
+		SPEED = 0;
+	}
+	else if (direita == true && player.Px == 692 && player.Py >=0 && player.Py <= 600){
+		SPEED = 0;
+	}
+	else if (cima == true && player.Py == 42 && player.Px >= 0 && player.Px <= 800){
+		SPEED = 0;
+	}
+	else if (baixo == true && player.Py == 424 && player.Px >= 0 && player.Px <= 800){
+		SPEED = 0;
+	}
+	else{
+		SPEED = 2;
+	}
+}
+
+void Boss_movimento(){
+
+	if(dBoss.x > dPlayer.x)
+		dBoss.x -= 1;
+	if(dBoss.x < dPlayer.x)
+		dBoss.x += 1;
+	if (dBoss.y > dPlayer.y && dBoss.x == dPlayer.x)
+		dBoss.y -= 1;
+	if (dBoss.y < dPlayer.y && dBoss.x == dPlayer.x)
+		dBoss.y += 1;
+
+	if (Boss_Vida == 20)
+		sVida_Boss.y = 0;
+	if (Boss_Vida == 18)
+		sVida_Boss.y = 600;
+	if (Boss_Vida == 16)
+		sVida_Boss.y = 1200;
+	if (Boss_Vida == 14)
+		sVida_Boss.y = 1800;
+	if (Boss_Vida == 12)
+		sVida_Boss.y = 2400;
+	if (Boss_Vida == 10)
+		sVida_Boss.y = 3000;
+	if (Boss_Vida == 8)
+		sVida_Boss.y = 3600;
+	if (Boss_Vida == 6)
+		sVida_Boss.y = 4200;
+	if (Boss_Vida == 4)
+		sVida_Boss.y = 4800;
+	if (Boss_Vida == 2)
+		sVida_Boss.y = 5400;
+	if(Boss_Vida <= 0){
+		// Fim do Jogo
+	}
+
+}
+
+void Boss_Dano(){
+
+	if (dMagiaLR.x + dMagiaLR.w >= dBoss.x && dMagiaLR.x <= dBoss.x + dBoss.w && Imunidade_Mob == 0){
+		if (dMagiaLR.y + dMagiaLR.h >= dBoss.y && dMagiaLR.y <= dBoss.y + dBoss.h){
+			Boss_Vida -= 1;
+			Imunidade_Mob = 150;
+		}
+	}
+	if (dMagiaTD.x + dMagiaTD.w >= dBoss.x && dMagiaTD.x <= dBoss.x + dBoss.w && Imunidade_Mob == 0){
+		if (dMagiaTD.y + dMagiaTD.h >= dBoss.y && dMagiaTD.y <= dBoss.y + dBoss.h){
+			Boss_Vida -= 1;
+			Imunidade_Mob = 150;
+		}
+	}
+
+	if (dMagiaLR.y + dMagiaLR.h >= dBoss.y && dMagiaLR.y <= dBoss.y + dBoss.h && Imunidade_Mob == 0){
+		if (dMagiaLR.x + dMagiaLR.w >= dBoss.x && dMagiaLR.x <= dBoss.x + dBoss.w){
+			Golem_Vida -= 1;
+			Imunidade_Mob = 150;
+		}
+	}
+
+	if (dMagiaTD.y + dMagiaTD.h >= dGolem.y && dMagiaTD.y <= dBoss.y + dBoss.h && Imunidade_Mob == 0){
+		if (dMagiaTD.x + dMagiaTD.w >= dBoss.x && dMagiaTD.x <= dBoss.x + dBoss.w){
+			Golem_Vida -= 1;
+			Imunidade_Mob = 150;
+		}
+	}
+}
+
+void Boss_Hit(){
+
+	if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w && Imunidade == 0){
+		if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
+			player.Vida -= 15;
+			Imunidade = 100;
+		}
+	}
+
+	if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h && Imunidade == 0){
+		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
+			player.Vida -= 15;
+			Imunidade = 100;
 		}
 	}
 }
