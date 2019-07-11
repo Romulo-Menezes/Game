@@ -227,8 +227,8 @@ void Colisa_Mundo3();
 void Boss_movimento();
 void Boss_Dano();
 void Boss_Hit();
-void NPC_Vila();
-void NPC_Interacao();
+//void NPC_Vila();
+//void NPC_Interacao();
 //----------------------------------------------------------------------------------------------
 
 int main (){
@@ -545,6 +545,7 @@ void Jogo_Inteiro (){
 			Boss_Dano();
 			Boss_Hit();
 		}
+
 		Andar_Logic ();
 		Pos_Golem();
 		Golem_Movimento();
@@ -557,10 +558,10 @@ void Jogo_Inteiro (){
 		Player_Ataque();
 		Movimento_Magia();
 
-		if(Muda_Mapa == 1){
+		/*if(Muda_Mapa == 1){
 			NPC_Vila();
 			NPC_Interacao();
-		}
+		}*/
 
 		Inimigo ();
 		Inimigo_Anda();
@@ -580,7 +581,7 @@ void Jogo_Inteiro (){
 		Contador_Boss++;
 		Passos++;
 		//printf("C.x: %d C.w: %d\nC.y: %d C.h: %d\n\n",sCamera.x, sCamera.w +sCamera.x, sCamera.y, sCamera.h+sCamera.y);
-		//printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
+		printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
 		//printf("mob1: %d mob2: %d mob3: %d mob4: %d mob5: %d\n", mob0, mob1, mob2, mob3, mob4);
 
 
@@ -1210,7 +1211,7 @@ void Inimigo(){
 			dEsqueleto.y += SPEED*4;
 		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dEsqueleto.y -= SPEED*4;
-
+		Inimigo_Animacao(&sEsqueleto);
 		Inimigo_Dano(&dEsqueleto, &mob0);
 	}
 	else if (sCamera.x < 408){
@@ -1231,6 +1232,7 @@ void Inimigo(){
 			dMob1.y += SPEED*4;
 		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob1.y -= SPEED*4;
+		Inimigo_Animacao(&sMob1);
 		Inimigo_Dano(&dMob1, &mob1);
 	}
 	else if (sCamera.x < 854){
@@ -1251,6 +1253,7 @@ void Inimigo(){
 			dMob3.y += SPEED*4;
 		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob3.y -= SPEED*4;
+		Inimigo_Animacao(&sMob3);
 		Inimigo_Dano(&dMob3, &mob2);
 	}
 	else if (sCamera.x < 2470){
@@ -1271,6 +1274,7 @@ void Inimigo(){
 			dMob4.y += SPEED*4;
 		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob4.y -= SPEED*4;
+		Inimigo_Animacao(&sMob4);
 		Inimigo_Dano(&dMob4, &mob3);
 	}
 	else if (sCamera.x < 228){
@@ -1291,6 +1295,7 @@ void Inimigo(){
 			dMob5.y += SPEED*4;
 		if (baixo == true && cima == false && direita == false && esquerda == false)
 			dMob5.y -= SPEED*4;
+		Inimigo_Animacao(&sMob5);
 		Inimigo_Dano(&dMob5, &mob4);
 	}
 	else if (sCamera.x < 2182){
@@ -1333,11 +1338,11 @@ void Inimigo_Anda(){
 		Passos = -80;
 	}
 
-	Inimigo_Animacao(&sEsqueleto);
+	/*Inimigo_Animacao(&sEsqueleto);
 	Inimigo_Animacao(&sMob1);
 	Inimigo_Animacao(&sMob3);
 	Inimigo_Animacao(&sMob4);
-	Inimigo_Animacao(&sMob5);
+	Inimigo_Animacao(&sMob5);*/
 
 }
 
@@ -1510,6 +1515,7 @@ void Inimigo_Animacao(SDL_Rect *mob){
 		mob->y = PLAYER_H;
 		if(mob->x < PLAYER_W * 3 && Contador >= LIMITE){
 			mob->x += PLAYER_W;
+			Contador = 0;
 		}
 		else if(mob->x >= PLAYER_W * 3 && Contador >= LIMITE){
 			Contador = 0;
@@ -1520,6 +1526,7 @@ void Inimigo_Animacao(SDL_Rect *mob){
 		mob->y = 0;
 		if(mob->x < PLAYER_W * 3 && Contador >= LIMITE){
 			mob->x += PLAYER_W;
+			Contador = 0;
 		}
 		else if(mob->x >= PLAYER_W * 3 && Contador >= LIMITE){
 			Contador = 0;
@@ -1771,10 +1778,11 @@ void Golem_Movimento(){
 	if(Golem_M == 1 && dGolem.x > dPlayer.x){
 		dGolem.x -= 1;
 		sGolem.y = 53 * 2;
-		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+		if (sGolem.x < 33 * 3 && Contador_Golem >= 30){
 			sGolem.x += 33;
+			Contador_Golem = 0;
 		}
-		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+		if (sGolem.x >= 33 * 3 && Contador_Golem >= 30){
 			sGolem.x = 0;
 			Contador_Golem = 0;
 		}
@@ -1782,10 +1790,11 @@ void Golem_Movimento(){
 	if(Golem_M == 1 && dGolem.x < dPlayer.x){
 		dGolem.x += 1;
 		sGolem.y = 53 * 3;
-		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+		if (sGolem.x < 33 * 3 && Contador_Golem >= 30){
 			sGolem.x += 33;
+			Contador_Golem = 0;
 		}
-		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+		else if (sGolem.x >= 33 * 3 && Contador_Golem >= 30){
 			sGolem.x = 0;
 			Contador_Golem = 0;
 		}
@@ -1793,10 +1802,11 @@ void Golem_Movimento(){
 	if(Golem_M == 1 && dGolem.y > dPlayer.y && dGolem.x == dPlayer.x){
 		dGolem.y -= 1;
 		sGolem.y = 53 * 1;
-		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+		if (sGolem.x < 33 * 3 && Contador_Golem >= 30){
 			sGolem.x += 33;
+			Contador_Golem = 0;
 		}
-		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+		else if (sGolem.x >= 33 * 3 && Contador_Golem >= 30){
 			sGolem.x = 0;
 			Contador_Golem = 0;
 		}
@@ -1804,10 +1814,11 @@ void Golem_Movimento(){
 	if(Golem_M == 1 && dGolem.y < dPlayer.y && dGolem.x == dPlayer.x){
 		dGolem.y += 1;
 		sGolem.y = 53 * 0;
-		if (sGolem.x <= 33 * 3 && Contador_Golem >= LIMITE){
+		if (sGolem.x < 33 * 3 && Contador_Golem >= 30){
 			sGolem.x += 33;
+			Contador_Golem = 0;
 		}
-		if (sGolem.x >= 33 * 3 && Contador_Golem >= LIMITE){
+		else if (sGolem.x >= 33 * 3 && Contador_Golem >= 30){
 			sGolem.x = 0;
 			Contador_Golem = 0;
 		}
@@ -1906,10 +1917,11 @@ void Boss_movimento(){
 	if(Boss_Vida > 0 && dBoss.x > dPlayer.x){
 		dBoss.x -= 1;
 		sBoss.y = 45 * 2;
-		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+		if (sBoss.x < 25 * 3 && Contador_Boss >= 16){
 			sBoss.x += 25;
+			Contador_Boss = 0;
 		}
-		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= 16){
 			sBoss.x = 0;
 			Contador_Boss = 0;
 		}
@@ -1917,10 +1929,11 @@ void Boss_movimento(){
 	if(Boss_Vida > 0 && dBoss.x < dPlayer.x){
 		dBoss.x += 1;
 		sBoss.y = 45 * 3;
-		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+		if (sBoss.x < 25 * 3 && Contador_Boss >= 16){
 			sBoss.x += 25;
+			Contador_Boss = 0;
 		}
-		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= 16){
 			sBoss.x = 0;
 			Contador_Boss = 0;
 		}
@@ -1928,10 +1941,11 @@ void Boss_movimento(){
 	if (Boss_Vida > 0 && dBoss.y > dPlayer.y && dBoss.x == dPlayer.x){
 		dBoss.y -= 1;
 		sBoss.y = 45 * 1;
-		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+		if (sBoss.x < 25 * 3 && Contador_Boss >= 16){
 			sBoss.x += 25;
+			Contador_Boss = 0;
 		}
-		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= 16){
 			sBoss.x = 0;
 			Contador_Boss = 0;
 		}
@@ -1939,10 +1953,11 @@ void Boss_movimento(){
 	if (Boss_Vida > 0 && dBoss.y < dPlayer.y && dBoss.x == dPlayer.x){
 		dBoss.y += 1;
 		sBoss.y = 45 * 0;
-		if (sBoss.x <= 25 * 3 && Contador_Boss >= LIMITE){
+		if (sBoss.x < 25 * 3 && Contador_Boss >= 16){
 			sBoss.x += 25;
+			Contador_Boss = 0;
 		}
-		else if (sBoss.x >= 25 * 3 && Contador_Boss >= LIMITE){
+		else if (sBoss.x >= 25 * 3 && Contador_Boss >= 16){
 			sBoss.x = 0;
 			Contador_Boss = 0;
 		}
@@ -2021,7 +2036,7 @@ void Boss_Hit(){
 		}
 	}
 }
-
+/*
 void NPC_Vila(){
 
 	if(Golem_Vida > 0 && player.Px >= 1582 && player.Py >= 1824 && player.Py <= 1914 && player.Px <= 2134){
@@ -2038,13 +2053,17 @@ void NPC_Vila(){
 		if(baixo == true && esquerda == false && direita == false && cima == false)
 			dBoss.y -= SPEED*4;
 
-		else if (player.Px < 1582){
+		else if (player.Px < 1582 && player.Py >= 0 && player.Py <= 3000){
 			dBoss.x = JANELA_W;
 			dBoss.y = JANELA_H/2;
 		}
-		else if (player.Px > 2134){
+		else if (player.Px > 2134 && player.Py >= 0 && player.Py <= 3000){
 			dBoss.x = -10 - dBoss.w;
 			dBoss.y = JANELA_H/2;		
+		}
+		else{
+			dBoss.x = JANELA_W;
+			dBoss.y = JANELA_H/2;			
 		}
 	}
 }
@@ -2053,7 +2072,7 @@ void NPC_Interacao(){
 
 	if (Interacao == 0 && dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
 		if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
-			// cria uma função de dialogo e coloca aqui e ali em baixo
+			
 			printf("Qual foi corno?\n");
 			Interacao++;
 		}
@@ -2061,9 +2080,9 @@ void NPC_Interacao(){
 
 	if (Interacao == 0 && dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
 		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
-			// aqui é o ali em baixo, é pra colocar a funçao aqui tbm.
+			
 			printf("Qual foi corno?\n");
 			Interacao++;
 		}
 	}
-}
+}*/
