@@ -242,7 +242,7 @@ void Boss_movimento();
 void Boss_Dano();
 void Boss_Hit();
 void NPC_Vila();
-void NPC_Interacao();
+//void NPC_Interacao();
 void Menu_Morte();
 void Obter_Historia();
 void Render_Historia1();
@@ -318,7 +318,7 @@ bool Inicio (){
 		success = false;
 	}
 	
-	else { Janela = SDL_CreateWindow ("Jogo 100% Boladaço", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, JANELA_W, JANELA_H, SDL_WINDOW_SHOWN); }
+	else { Janela = SDL_CreateWindow ("Where is Mary?", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, JANELA_W, JANELA_H, SDL_WINDOW_SHOWN); }
 
 	return success;
 }
@@ -586,7 +586,7 @@ void Jogo_Inteiro (){
 
 		if(Muda_Mapa == 1){
 			NPC_Vila();
-			NPC_Interacao();
+			//NPC_Interacao();
 		}
 
 		Inimigo ();
@@ -824,7 +824,7 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 	SDL_RenderClear(render);
 	if(Muda_Mapa == 1){
 		SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
-		SDL_RenderCopy (render, BOSS, &sBoss, &dBoss);
+		//SDL_RenderCopy (render, BOSS, &sBoss, &dBoss);
 		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
 
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
@@ -2170,25 +2170,6 @@ void NPC_Vila(){
 		else if (player.Px > 2134){
 			dBoss.x = -10 - dBoss.w;
 			dBoss.y = JANELA_H/2;		
-		}
-	}
-}
-
-void NPC_Interacao(){
-
-	if (Interacao == 0 && dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
-		if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
-			// cria uma função de dialogo e coloca aqui e ali em baixo
-			printf("Qual foi corno?\n");
-			Interacao++;
-		}
-	}
-
-	if (Interacao == 0 && dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
-		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
-			// aqui é o ali em baixo, é pra colocar a funçao aqui tbm.
-			printf("Qual foi corno?\n");
-			Interacao++;
 		}
 	}
 }
