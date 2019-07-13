@@ -40,6 +40,8 @@ int SPEED = 2;
 bool Play = true, Ataque = false;
 
 int historia1 = 0, historia2 = 0;
+bool Fala_1 = true, Fala_2 = false;
+bool NPCFala = false, Caminho_fechado = true;
 
 int Limitador = 0;
 int Passos = 1;
@@ -108,6 +110,7 @@ SDL_Surface* Barreira1S;
 SDL_Surface* Barreira2S;
 SDL_Surface* Barreira3S;
 SDL_Surface* Barreira4S;
+SDL_Surface* CaminhoFechado_S;
 
 SDL_Texture* Textura_Fundo;
 SDL_Texture* Layer_Up_Fundo;
@@ -122,6 +125,7 @@ SDL_Texture* Barreira1;
 SDL_Texture* Barreira2;
 SDL_Texture* Barreira3;
 SDL_Texture* Barreira4;
+SDL_Texture* CaminhoFechado;
 
 //Historia
 SDL_Surface* Image_Historia1;
@@ -277,6 +281,8 @@ void Render_Historia1();
 void Render_Historia2();
 void Anima_Alerta();
 void Fogo_Anima();
+void NPC_Pos();
+void NPC_Falas();
 //----------------------------------------------------------------------------------------------
 
 int main (){
@@ -565,10 +571,10 @@ void Jogo_Inteiro (){
 
 	Play = true;
 	Musicas_Tops();
-	const float FPS = 60;                    // // // // // //
-	const float FrameDelay = 1000/FPS;      //  Frame Per  //
-	unsigned long FrameStart;              //    Second   //
-	float FrameTime;                      // // // // // //
+	const float FPS = 60;              // // // // // //
+	const float FrameDelay = 1000/FPS;//  Frame Per  //
+	unsigned long FrameStart;        //    Second   //
+	float FrameTime;                // // // // // //
 	XPlayer();
 	Obter_Fundo();
 	Obter_Esc();
@@ -594,6 +600,11 @@ void Jogo_Inteiro (){
 		Ataque_False();
 		if (Muda_Mapa != 3){
 			Colisao_Fixa();
+		}
+
+		if( Muda_Mapa == 1){
+			NPC_Pos();
+			NPC_Falas();
 		}
 		if (Muda_Mapa == 3){
 			Colisa_Mundo3();
@@ -646,7 +657,8 @@ void Jogo_Inteiro (){
 		Contador_Alerta++;
 		Contador_Barreira ++;
 		//printf("C.x: %d C.w: %d\nC.y: %d C.h: %d\n\n",sCamera.x, sCamera.w +sCamera.x, sCamera.y, sCamera.h+sCamera.y);
-		//printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
+		printf("Player X: %d Player Y:%d\n\n", player.Px, player.Py);
+		//printf("x: %d  y: %d\n\n", dBoss.x, dBoss.y);
 		//printf("mob1: %d mob2: %d mob3: %d mob4: %d mob5: %d\n", mob0, mob1, mob2, mob3, mob4);
 		//printf("Contador: %d\nBarreira: %d\n\n", Contador_Barreira, Muda_Barreira);
 		if(Limitador_Ataque == 1)
@@ -853,6 +865,7 @@ void Obter_Fundo (void){ //Imagem de fundo
 	Barreira2S =IMG_Load("Resources/Image/barreira2.png");
 	Barreira3S =IMG_Load("Resources/Image/barreira3.png");
 	Barreira4S =IMG_Load("Resources/Image/barreira4.png");
+	CaminhoFechado_S = IMG_Load("Resources/Image/Passagem_fechada.png");
 
 	HUD = SDL_CreateTextureFromSurface(render, HUD_Surface);
 	Vida = SDL_CreateTextureFromSurface(render, Vida_Surface);
@@ -867,6 +880,7 @@ void Obter_Fundo (void){ //Imagem de fundo
 	Barreira2 = SDL_CreateTextureFromSurface (render, Barreira2S);
 	Barreira3 = SDL_CreateTextureFromSurface (render, Barreira3S);
 	Barreira4 = SDL_CreateTextureFromSurface (render, Barreira4S);
+	CaminhoFechado = SDL_CreateTextureFromSurface (render, CaminhoFechado_S);
 
 
 	Image_MenuMorte = IMG_Load("Resources/Image/MorteMenu.png");
@@ -891,6 +905,10 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 		else if (Muda_Barreira == 4)
 			SDL_RenderCopy(render, Barreira4, &sCamera, &dCamera);
 
+		if(Caminho_fechado == true)
+			SDL_RenderCopy (render, CaminhoFechado, &sCamera, &dCamera);
+
+		SDL_RenderCopy (render, BOSS, &sBoss, &dBoss);
 		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
 
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
@@ -1334,13 +1352,24 @@ void Colisao_Fixa(){
 	}
 
 	if (Golem_Vida > 0 && direita == true && player.Px == 2318 && player.Py >= 0 && player.Py <= 666){
-			SPEED = 0;
-			colidiu = true;
-		}
+		SPEED = 0;
+		colidiu = true;
+	}
 	else if (Golem_Vida <= 0 && direita == true && player.Px == 2318 && player.Py >= 0 && player.Py <= 666){
 		SPEED = 2;
 		colidiu = false;
-		}
+	}
+
+	if(Caminho_fechado == true && cima == true && player.Py == 1004 && player.Px >= 1924 && player.Px <= 2238){
+		SPEED = 0;
+		colidiu = true;
+	}
+	else if(Caminho_fechado == false && cima == true && player.Py == 1004 && player.Px >= 1924 && player.Px <= 2238){
+		SPEED = 2;
+		colidiu = false;
+	}
+
+
 }
 
 void MudancaDeMapa (){
@@ -1430,6 +1459,8 @@ void MudancaDeMapa (){
 
 	if(player.Chave == 0 && Muda_Mapa == 2 && player.Px >= 568 && player.Px <= 603 && player.Py == 230){
 		Alerta2 = true;
+		Fala_2 = true;
+		Fala_1 = false;
 	}
 	else{
 		Alerta2 = false;
@@ -1983,10 +2014,10 @@ void Reset(){
 
 	dGolem.x = -100;
 	dGolem.y = JANELA_H/2;
-	Golem_Vida = 10;
+	Golem_Vida = 12;
 	sGolem.y = 0; sGolem.x = 0;
-	Boss_Vida = 21;
-	dBoss.x = JANELA_W; dBoss.y = JANELA_H/2;
+	Boss_Vida = 20;
+	dBoss.x = 3480; dBoss.y = 2690;
 	Interacao = 0; Contador_Golem = 0; Contador_Boss = 0;
 }
 
@@ -2276,7 +2307,7 @@ void Boss_Hit(){
 		}
 	}
 
-	if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h && Imunidade == 0){
+	if (dPlayer.y + dPlayer.h >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h && Imunidade == 0){
 		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
 			player.Vida -= 15;
 			Imunidade = 100;
@@ -2310,10 +2341,11 @@ void Fogo_Anima(){
 		sFogo_mob5.x = sMob5.x;
 		sFogo_mob5.y = sMob5.y;
 
-		sFogo_Golem.x = sGolem.x;
-		sFogo_Golem.y = sGolem.y;
+		if(Golem_Vida <= 9){
+			sFogo_Golem.x = sGolem.x;
+			sFogo_Golem.y = sGolem.y;
+		}
 
-		if(Golem_Vida <= 19)
 		sFogo_Boss.x = sBoss.x;
 		sFogo_Boss.y = sBoss.y;
 
@@ -2329,4 +2361,87 @@ void Fogo_Anima(){
 
 		sFogo_Boss.x = -100;
 	}
+}
+
+void NPC_Pos(){
+	if(Golem_Vida > 0){
+		if (direita == true && esquerda == false && cima == false && baixo == false)
+			dBoss.x -= SPEED*3;
+		if (esquerda == true && direita == false && cima == false && baixo == false)
+			dBoss.x += SPEED*3;
+		if(cima == true && esquerda == false && direita == false && baixo == false)
+			dBoss.y += SPEED*4;
+		if(baixo == true && esquerda == false && direita == false && cima == false)
+			dBoss.y -= SPEED*4;
+	}
+
+	if (sPlayer.y == PLAYER_H * 2){
+		sBoss.y = 45 * 3;
+	}
+	else if (sPlayer.y == PLAYER_H * 3){
+		sBoss.y = 45 * 2;
+	}
+	else{
+		sBoss.y = 0;
+	}
+
+}
+
+void NPC_Falas(){
+
+	if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
+		if (dPlayer.y + dPlayer.w >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
+			NPCFala = true;
+		}
+		else{
+			NPCFala = false;
+		}
+	}
+
+	if (dPlayer.y + dPlayer.h >= dBoss.y && dPlayer.y <= dBoss.y + dBoss.h){
+		if (dPlayer.x + dPlayer.w >= dBoss.x && dPlayer.x <= dBoss.x + dBoss.w){
+			NPCFala = true;
+		}
+		else{
+			NPCFala = false;
+		}
+	}
+
+	if (Fala_1 == true && NPCFala == true){
+
+		sCamera.x = 1418; sCamera.y = 1528;
+		dBoss.x = dPlayer.x + dPlayer.w + 20;
+
+		player.Px = sCamera.x + dPlayer.x;
+		player.Py = sCamera.y + dPlayer.y;
+
+		printf("Qual foi corno? \n");
+
+		/* COLOCAR AQUI OS DIALOGOS QUE
+		VAI LEVAR O PLAYER PARA A CAVERNA
+		E TIRA O QUAL FOI CORNO !!!!    */
+
+		Fala_1 = false;
+	}
+	else if (Fala_2 == true && NPCFala == true){
+
+		sCamera.x = 1418; sCamera.y = 1528;
+
+		player.Px = sCamera.x + dPlayer.x;
+		player.Py = sCamera.y + dPlayer.y;
+
+		dBoss.x = dPlayer.x + dPlayer.w + 20;
+
+		printf("É corno porque tua mulher esta te traindo.\n");
+
+		/* COLOCAR AQUI OS DIALOGOS QUE VAI
+		MANDA O PLAYER MATAR O GOLEM E PEGAR
+		CHAVE */
+
+
+		Fala_2 = false;
+		Caminho_fechado = false;
+	}
+
+
 }
