@@ -31,7 +31,7 @@ int LARGURA = 3264;
 int ALTURA = 1920;
 
 int LIMITE = 8;
-int Contador_Vida = 0, Contador_Alerta = 0, Contador_Barreira = 0;
+int Contador_Vida = 0, Contador_Alerta = 0, Contador_Barreira = 0, Muda_Barreira = 0;
 
 int LIMITE2 = 12;
 
@@ -54,7 +54,7 @@ int Contador_Ataque = 0;
 int Limitador_Ataque = 0;
 int Pos_Ataque;
 
-bool esquerda = false, direita = false, cima = false, baixo = false;
+bool esquerda = false, direita = false, cima = false, baixo = false, na_area = false;
 bool colidiu = false, qPress = false, ePress = false, Alerta1 = false, Alerta2 = false;
 
 //Janela
@@ -104,6 +104,10 @@ SDL_Surface* Q_Press_S;
 SDL_Surface* E_Press_S;
 SDL_Surface* Alerta_1_S;
 SDL_Surface* Alerta_2_S;
+SDL_Surface* Barreira1S;
+SDL_Surface* Barreira2S;
+SDL_Surface* Barreira3S;
+SDL_Surface* Barreira4S;
 
 SDL_Texture* Textura_Fundo;
 SDL_Texture* Layer_Up_Fundo;
@@ -114,6 +118,10 @@ SDL_Texture* Q_Press;
 SDL_Texture* E_Press;
 SDL_Texture* Alerta_1;
 SDL_Texture* Alerta_2;
+SDL_Texture* Barreira1;
+SDL_Texture* Barreira2;
+SDL_Texture* Barreira3;
+SDL_Texture* Barreira4;
 
 //Historia
 SDL_Surface* Image_Historia1;
@@ -263,8 +271,6 @@ void Colisa_Mundo3();
 void Boss_movimento();
 void Boss_Dano();
 void Boss_Hit();
-void NPC_Vila();
-//void NPC_Interacao();
 void Menu_Morte();
 void Obter_Historia();
 void Render_Historia1();
@@ -586,7 +592,6 @@ void Jogo_Inteiro (){
 		}
 
 		Ataque_False();
-
 		if (Muda_Mapa != 3){
 			Colisao_Fixa();
 		}
@@ -598,6 +603,16 @@ void Jogo_Inteiro (){
 		}
 		Andar_Logic ();
 		Pos_Golem();
+
+		if (Contador_Barreira >= 15 && Muda_Barreira < 4 && Golem_M == 1){
+			Muda_Barreira++;
+			Contador_Barreira = 0;
+		}
+		else if (Contador_Barreira >= 15 && Muda_Barreira > 0 && Golem_M == 0){
+			Muda_Barreira--;
+			Contador_Barreira = 0;
+		}
+
 		Golem_Movimento();
 		Golem_Hit();
 
@@ -607,11 +622,6 @@ void Jogo_Inteiro (){
 
 		Player_Ataque();
 		Movimento_Magia();
-
-		if(Muda_Mapa == 1){
-			NPC_Vila();
-			//NPC_Interacao();
-		}
 
 		Inimigo ();
 		Inimigo_Anda();
@@ -638,7 +648,7 @@ void Jogo_Inteiro (){
 		//printf("C.x: %d C.w: %d\nC.y: %d C.h: %d\n\n",sCamera.x, sCamera.w +sCamera.x, sCamera.y, sCamera.h+sCamera.y);
 		//printf("Player X: %d Player Y:%d\n", player.Px, player.Py);
 		//printf("mob1: %d mob2: %d mob3: %d mob4: %d mob5: %d\n", mob0, mob1, mob2, mob3, mob4);
-
+		//printf("Contador: %d\nBarreira: %d\n\n", Contador_Barreira, Muda_Barreira);
 		if(Limitador_Ataque == 1)
 			Contador_Ataque++;
 		
@@ -839,6 +849,10 @@ void Obter_Fundo (void){ //Imagem de fundo
 	E_Press_S = IMG_Load("Resources/Image/E_press.png");
 	Alerta_1_S = IMG_Load("Resources/Image/Alerta_1.png");
 	Alerta_2_S = IMG_Load("Resources/Image/Alerta_2.png");
+	Barreira1S =IMG_Load("Resources/Image/barreira1.png");
+	Barreira2S =IMG_Load("Resources/Image/barreira2.png");
+	Barreira3S =IMG_Load("Resources/Image/barreira3.png");
+	Barreira4S =IMG_Load("Resources/Image/barreira4.png");
 
 	HUD = SDL_CreateTextureFromSurface(render, HUD_Surface);
 	Vida = SDL_CreateTextureFromSurface(render, Vida_Surface);
@@ -849,6 +863,11 @@ void Obter_Fundo (void){ //Imagem de fundo
 	E_Press = SDL_CreateTextureFromSurface (render, E_Press_S);
 	Alerta_1 = SDL_CreateTextureFromSurface (render, Alerta_1_S);
 	Alerta_2 = SDL_CreateTextureFromSurface (render, Alerta_2_S);
+	Barreira1 = SDL_CreateTextureFromSurface (render, Barreira1S);
+	Barreira2 = SDL_CreateTextureFromSurface (render, Barreira2S);
+	Barreira3 = SDL_CreateTextureFromSurface (render, Barreira3S);
+	Barreira4 = SDL_CreateTextureFromSurface (render, Barreira4S);
+
 
 	Image_MenuMorte = IMG_Load("Resources/Image/MorteMenu.png");
 	Text_MenuMorte = SDL_CreateTextureFromSurface(render, Image_MenuMorte);
@@ -862,6 +881,16 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 	if(Muda_Mapa == 1){
 		SDL_RenderCopy (render, Textura_Fundo, &sCamera, &dCamera); // Onde será apresentado, textura do que será apresentado, posição, posição
 		//SDL_RenderCopy (render, BOSS, &sBoss, &dBoss);
+
+		if (Muda_Barreira == 1)
+			SDL_RenderCopy(render, Barreira1, &sCamera, &dCamera);
+		else if (Muda_Barreira == 2)
+			SDL_RenderCopy(render, Barreira2, &sCamera, &dCamera);
+		else if (Muda_Barreira == 3)
+			SDL_RenderCopy(render, Barreira3, &sCamera, &dCamera);
+		else if (Muda_Barreira == 4)
+			SDL_RenderCopy(render, Barreira4, &sCamera, &dCamera);
+
 		SDL_RenderCopy(render, PlayerTexture, &(sPlayer), &(dPlayer));
 
 		SDL_RenderCopy(render, EsqueletoTexture, &sEsqueleto, &dEsqueleto);
@@ -887,7 +916,7 @@ bool Render (void){ //Precisa de Render Copy para tudo que for ser exibido na te
 
 		SDL_RenderCopy (render, Layer_Up_Fundo, &sCamera, &dCamera);
 
-		SDL_RenderCopy (render, Vida, &sVida, &dVida);
+		SDL_RenderCopy (render, Vida, &sVida, NULL);
 		if (Golem_M == 1)
 			SDL_RenderCopy (render, Vida_Golem_T, &sVida_Golem, &dVida_Golem);
 
@@ -1952,16 +1981,17 @@ void Reset(){
 	sCamera.x = 424; sCamera.y = 930; sCamera.w = 272; sCamera.h = 160;
 	dCamera.x = 0; dCamera.y = 0; dCamera.w = 800; dCamera.h = 600;
 
-	dGolem.x = -10 - dGolem.w;
+	dGolem.x = -100;
 	dGolem.y = JANELA_H/2;
 	Golem_Vida = 10;
 	sGolem.y = 0; sGolem.x = 0;
-	Boss_Vida = 20;
+	Boss_Vida = 21;
 	dBoss.x = JANELA_W; dBoss.y = JANELA_H/2;
 	Interacao = 0; Contador_Golem = 0; Contador_Boss = 0;
 }
 
 void Pos_Golem(){
+
 	if(Golem_Vida > 0 && player.Px >= 1962 && player.Py >= 0 && player.Py <= 660 && player.Px <= 2318){
 
 		if (direita == true && esquerda == false && cima == false && baixo == false)
@@ -1974,13 +2004,12 @@ void Pos_Golem(){
 			dGolem.y -= SPEED*4;
 
 		Golem_M = 1;
-
 		Golem_Dano();
+
 	}
 	else{
 		Golem_M = 0;
 	}
-
 }
 
 void Golem_Movimento(){
@@ -2009,7 +2038,7 @@ void Golem_Movimento(){
 			Contador_Golem = 0;
 		}
 	}
-	if(Golem_M == 1 && dGolem.y > dPlayer.y && dGolem.x >= dPlayer.x){
+	if(Golem_M == 1 && dGolem.y > dPlayer.y && dGolem.x == dPlayer.x){
 		dGolem.y -= 2;
 		sGolem.y = 53 * 1;
 		if (sGolem.x < 33 * 3 && Contador_Golem >= 30){
@@ -2021,7 +2050,7 @@ void Golem_Movimento(){
 			Contador_Golem = 0;
 		}
 	}
-	if(Golem_M == 1 && dGolem.y < dPlayer.y && dGolem.x >= dPlayer.x){
+	if(Golem_M == 1 && dGolem.y < dPlayer.y && dGolem.x == dPlayer.x){
 		dGolem.y += 2;
 		sGolem.y = 53 * 0;
 		if (sGolem.x < 33 * 3 && Contador_Golem >= 30){
@@ -2255,33 +2284,6 @@ void Boss_Hit(){
 	}
 }
 
-void NPC_Vila(){
-
-	if(Golem_Vida > 0 && player.Px >= 1582 && player.Py >= 1824 && player.Py <= 1914 && player.Px <= 2134){
-	
-		if (direita == true && esquerda == false && cima == false && baixo == false)
-			dBoss.x -= SPEED*3;
-
-		if (esquerda == true && direita == false && cima == false && baixo == false)
-			dBoss.x += SPEED*3;
-
-		if(cima == true && esquerda == false && direita == false && baixo == false)
-			dBoss.y += SPEED*4;
-
-		if(baixo == true && esquerda == false && direita == false && cima == false)
-			dBoss.y -= SPEED*4;
-
-		else if (player.Px < 1582){
-			dBoss.x = JANELA_W;
-			dBoss.y = JANELA_H/2;
-		}
-		else if (player.Px > 2134){
-			dBoss.x = -10 - dBoss.w;
-			dBoss.y = JANELA_H/2;		
-		}
-	}
-}
-
 void Anima_Alerta (){
 
 	if ((Alerta1 == true || Alerta2 == true) && sAlerta.x == 0 && Contador_Alerta >= 15){
@@ -2311,6 +2313,7 @@ void Fogo_Anima(){
 		sFogo_Golem.x = sGolem.x;
 		sFogo_Golem.y = sGolem.y;
 
+		if(Golem_Vida <= 19)
 		sFogo_Boss.x = sBoss.x;
 		sFogo_Boss.y = sBoss.y;
 
