@@ -16,8 +16,6 @@
 #define PLAYER_H 46 // Altura da sprite
 
 
-void Destruir_Menu();
-
 //VARIÁVEIS DO MENU
 
 int seletor = 0, menu = 1, how = 1, rank = 1, cred = 1;
@@ -257,13 +255,6 @@ SDL_Rect dObjetivo = {210, 20, 345, 61};
 int objetivo = 0;
 
 
-typedef struct {
-    char NOME[15];
-    int points;
-}SCORE;
-
-SCORE atual;
-
 typedef struct
 {
 	int Px;
@@ -275,6 +266,12 @@ typedef struct
 
 Entidade player;
 
+/*int *globalx4, *globaly4;
+
+int mapaw4  = 1080, mapah4  = 900;
+int ww4 = 640, hh4 =400;
+
+SCORE top[5];
 
 TTF_Font* rFonte;
 SDL_Surface* FonteTexto;
@@ -467,7 +464,145 @@ void TextoInput (SDL_Renderer * render, SDL_Window * Janela) {
     Verificar_Arquivo(atual);
 }
 
-TTF_Font* FonteRank;
+//fonte//
+// SDL_Rect riconpotion = {15, 42, 15, 16.5};
+SDL_Rect textRect4  = {12.5,60, 100, 500};
+SDL_Rect textRect5 = {12.5, 60, 100, 200};
+TTF_Font* fonte4 ;
+SDL_Surface* fontePronto4 ;
+SDL_Color color41 = {255,255,255}; // branco como a neve //
+SDL_Color color42 = {71,71,71};
+SDL_Color color43 = {120,120,120}; 
+SDL_Texture* text4[10];
+char menu4[50] = "JOGAR";
+
+Mix_Music * music4;
+
+SDL_Rect cam4 = {0,0, 640, 400};
+
+SDL_Window* gJanelaReal4= NULL; // CRIANDO JANELA //
+SDL_Renderer* render;// Render da Screen //
+
+SDL_Event loopevent4;
+
+
+bool rescalar4(void){
+   if(loopevent4.type ==SDL_WINDOWEVENT)
+      if(loopevent4.type ==SDL_WINDOWEVENT_RESIZED)
+      {
+        ww4=loopevent4.window.data1;
+        hh4=loopevent4.window.data2;
+    }
+}
+
+void fontes4(void){
+  static const int FONTSIZE = 24;
+  fonte4 = TTF_OpenFont("fontes/fontetop.ttf", FONTSIZE);
+  fontePronto4 = TTF_RenderText_Solid(fonte4, menu4, color41);
+  text4[0] = SDL_CreateTextureFromSurface(render, fontePronto4);
+  SDL_QueryTexture(text4[0], NULL, NULL, &textRect4.w, &textRect4.h);
+  SDL_FreeSurface(fontePronto4);
+}
+
+void alterarfonte4(SDL_Rect fonteRect, SDL_Color color, char menuzada[]){
+
+  fontePronto4 = TTF_RenderText_Solid(fonte4, menuzada, color);
+  text4[0] = SDL_CreateTextureFromSurface(render, fontePronto4);
+
+  SDL_QueryTexture(text4[0], NULL, NULL, &textRect4.w, &textRect4.h);
+}
+
+
+
+void renderizarfundo4 (void) {
+
+  SDL_Event event;
+  static int sentidox = 1;
+  static int sentidoy = 1;
+
+  cam4.x = *globalx4 - 320;
+  cam4.y = *globaly4 - 200;
+
+  if(cam4.x < 0) {
+    sentidox = 1;
+    cam4.x = 0;
+  }
+  if(cam4.y < 0){
+    sentidoy = 1;
+    cam4.y = 0;
+  }
+  if(cam4.x + cam4.w >= mapaw4) {
+    sentidox = -1;
+    cam4.x = mapaw4 - 640;
+  }
+  if(cam4.y + cam4.h >= mapah4) {
+    sentidoy = -1;
+    cam4.y = mapah4 - 400;
+  }
+
+  *globalx4 += sentidox;
+  *globaly4 += sentidoy;
+
+  SDL_RenderClear(render);
+  // 4B0082
+  SDL_RenderCopy(render, Text_Ranking, &cam4, NULL);
+
+  
+  SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+
+
+  sprintf(menu4, "RANKING DE PONTOS");
+  textRect4.x = 160; textRect4.y = 20;
+    alterarfonte4(textRect4, color42, menu4);   
+   SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+
+  sprintf(menu4, "PONTOS");
+  textRect4.x = 340; textRect4.y = 50;
+  alterarfonte4(textRect4, color42, menu4);
+ 
+  SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+
+    sprintf(menu4, "NOME");
+  textRect4.x = 20; textRect4.y = 50;
+    alterarfonte4(textRect4, color42, menu4);
+ 
+   SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+
+
+
+  for(int i=0;i<5;i++)
+  {
+      sprintf(menu4, "%s",top[i].NOME);
+    textRect4.x = 20; textRect4.y =80+(50*i);
+     alterarfonte4(textRect4, color42, menu4);
+    
+    SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+
+    sprintf(menu4, "%.6d",top[i].points);
+    textRect4.x = 480; textRect4.y = 80 +(50*i);
+     alterarfonte4(textRect4, color42, menu4);
+    
+    SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+  }
+  sprintf(menu4, "VOLTAR");
+  textRect4.x = 20; textRect4.y = 340;
+   
+  SDL_RenderCopy(render, text4[0], NULL, &textRect4);
+
+  SDL_RenderPresent(render); 
+}
+
+int pontos(SDL_Renderer * renderer, SDL_Window * Janelona) {
+    
+    FILE* arquivo;
+    arquivo= fopen("score/score.bin","r");
+    fread(&top,sizeof(SCORE),5,arquivo);
+    fclose(arquivo);
+
+ }
+
+
+/*TTF_Font* FonteRank;
 SDL_Surface* Fonte_Rank;
 SDL_Texture* TextR[10];
 
@@ -512,7 +647,7 @@ void Alterar_FonteRank(SDL_Rect TextRectR1, SDL_Color Color1, char RankingChar){
   SDL_FreeSurface(fundoSurf4);
 
 }*/
-
+/*
 SCORE top[5];
 
 void Ranking_Arquivo (void) {
@@ -601,6 +736,7 @@ int Pontos (SDL_Renderer * render, SDL_Window * Janela){
 
 }
 
+*/
 
 bool Inicio();
 void Render_Janela();
@@ -658,6 +794,7 @@ void NPC_Falas();
 void Game_Music();
 void Objetivo();
 void You_Win();
+void Destruir_Menu();
 //----------------------------------------------------------------------------------------------
 
 int main(){
@@ -676,7 +813,6 @@ int main(){
 	}
 	else {
 
-		Fontes_Ranking();
 		Render_Janela();
 		Musicas_Tops();
 		Menu();
@@ -704,7 +840,6 @@ int main(){
 	SDL_FreeSurface(Image_Historia6);
 	SDL_FreeSurface(Image_Objetivo);
 	SDL_FreeSurface(Image_Win);
-	 SDL_FreeSurface(FonteTexto);
 
 	SDL_DestroyTexture(PlayerTexture);
 	SDL_DestroyTexture(Text_Objetivo);
@@ -815,10 +950,9 @@ void Menu(){
 
 						rank = 1;
 
-						Pontos(render, Janela);
-
 						while (rank){
-							Pontos(render, Janela);
+							Ranking();
+							
 						}
 					}
 
@@ -881,12 +1015,12 @@ void Jogo_Inteiro(){
 
 	player.Px = dPlayer.x + sCamera.x;
 	player.Py = dPlayer.y + sCamera.y;
-	player.Vida = 2000;
+	player.Vida = 30;
 
 	mob0 = 2; mob1 = 2;	mob2 = 2; mob3 = 2;	mob4 = 2;
 
 	Play = true;
-	const float FPS = 180;              // // // // // //
+	const float FPS = 60;              // // // // // //
 	const float FrameDelay = 1000/FPS;//  Frame Per  //
 	unsigned long FrameStart;        //    Second   //
 	float FrameTime;                // // // // // //
@@ -1017,6 +1151,31 @@ void HowPlay(){
 	}
 }
 
+void Ranking(){
+
+	SDL_Delay(1000/60);
+	SDL_RenderClear(render);
+	SDL_RenderCopy(render, Text_Ranking, NULL, NULL);
+	SDL_RenderPresent(render);
+
+	while(SDL_PollEvent(&event)){
+
+		if (event.type == SDL_QUIT){ //Fechar e acabar com Geral
+			rank = 0;
+			menu = 0;
+			Destruir_Menu();
+			SDL_Quit();
+		}
+		
+		if (event.type == SDL_KEYDOWN){
+
+			if (event.key.keysym.sym == SDLK_ESCAPE){
+				rank = 0;
+				seletor = 0;
+			}
+		}
+	}
+}
 
 void Credits(){
 
@@ -1136,14 +1295,8 @@ void Obter_Historia(){
 	Image_Historia3 = IMG_Load("Resources/Image/Historia-03.png");
 	Text_Historia3 = SDL_CreateTextureFromSurface(render, Image_Historia3);
 
-	Image_Historia4 = IMG_Load("Resources/Image/Historia-04.png");
+	Image_Historia4 = IMG_Load("Resources/Image/Historia-06.png");
 	Text_Historia4 = SDL_CreateTextureFromSurface(render, Image_Historia4);
-
-	Image_Historia5 = IMG_Load("Resources/Image/Historia-05.png");
-	Text_Historia5 = SDL_CreateTextureFromSurface(render, Image_Historia5);
-
-	Image_Historia6 = IMG_Load("Resources/Image/Historia-06.png");
-	Text_Historia6 = SDL_CreateTextureFromSurface(render, Image_Historia6);
 
 
 }
@@ -1242,13 +1395,13 @@ void XPlayer(){
 void Musicas_Tops(){
 
 	Musica_1 = Mix_LoadWAV("Resources/Melodias/Musica1.wav");
-	Musica_2 = Mix_LoadWAV("Resources/Melodias/Musica2.mp3");
-	Musica_3 = Mix_LoadWAV("Resources/Melodias/Musica3.mp3");
+	Musica_2 = Mix_LoadWAV("Resources/Melodias/Musica2.wav");
+
 
 	Mix_AllocateChannels(2); //Alocar canais para as músicas
 
 	Mix_Volume(1, 7); //Canal e volume do canal, o volume vai de 0 a 10
-	Mix_Volume(2, 6);
+	Mix_Volume(2, 7);
 
 	if (Musica_1 == NULL){
 		printf ("Erro Musica_1: %s\n", Mix_GetError());
@@ -1266,21 +1419,16 @@ void Game_Music(){
 	mus_game = 1;
 
 	if (mus_game = 1){
-
-		Mix_PlayChannel(1, Musica_1, 1);
 	
-	/*srand (time(NULL));
+		srand (time(NULL));
 
-	int music = ((rand()) % 3);
+		int music = ((rand()) % 2);
 
-	if (music == 0)
-		Mix_PlayChannel(2, Musica_1, 1); //Canal que vai tocar, musica que será tocada, quantidade de vezes que será tocada.
+		if (music == 0)
+			Mix_PlayChannel(1, Musica_1, 1); //Canal que vai tocar, musica que será tocada, quantidade de vezes que será tocada.
 
-	else if (music == 1)
-		Mix_PlayChannel(2, Musica_2, 1);
-
-	else if (music == 2)
-		Mix_PlayChannel(1, Musica_3, 1);*/
+		else if (music == 1)
+			Mix_PlayChannel(1, Musica_2, 1);
 	}
 }
 
@@ -1300,8 +1448,6 @@ void You_Win(){
 		SDL_Delay(1000/60);
 
 		SDL_RenderCopy(render, Text_Win, NULL, NULL);
-
-		TextoInput(render,Janela);
 
 		SDL_RenderPresent(render);
 
@@ -1380,7 +1526,7 @@ void Render_Historia3(){
 	
 	esquerda = false; direita = false; cima = false; baixo = false;
 
-	historia3 = 3; 
+	historia3 = 6; 
 
 	while (historia3){
 
@@ -1405,9 +1551,11 @@ void Render_Historia3(){
 
 void Render_Historia4(){
 	
+	cima = true;
+
 	esquerda = false; direita = false; cima = false; baixo = false;
 
-	historia4 = 1; 
+	historia4 = 3; 
 
 	while (historia4){
 
@@ -1430,64 +1578,6 @@ void Render_Historia4(){
 	}
 }
 
-
-void Render_Historia5(){
-
-	dHist4.x = 2000; dHist4.y = 2000;
-
-	esquerda = false; direita = false; cima = false; baixo = false;
-
-	historia5 = 2; 
-
-	while (historia5){
-
-		SDL_Delay(1000/60);
-		SDL_RenderCopy(render, Text_Historia5, &sHist5, NULL);		
-		SDL_RenderPresent(render);
-
-		while(SDL_PollEvent(&event)){
-
-			if (event.type == SDL_KEYDOWN){
-
-				if (event.key.keysym.sym == SDLK_e){
-								
-					historia5 --;
-
-					sHist5.x = sHist5.x + 800;
-				}	
-			}
-		}
-	}	
-}
-
-void Render_Historia6(){
-
-	cima = true;
-	
-	esquerda = false; direita = false; cima = false; baixo = false;
-
-	historia6 = 3; 
-
-	while (historia6){
-
-		SDL_Delay(1000/60);
-		SDL_RenderCopy(render, Text_Historia6, &sHist6, NULL);		
-		SDL_RenderPresent(render);
-
-		while(SDL_PollEvent(&event)){
-
-			if (event.type == SDL_KEYDOWN){
-
-				if (event.key.keysym.sym == SDLK_e){
-								
-					historia6 --;
-
-					sHist6.x = sHist6.x + 800;
-				}	
-			}
-		}
-	}	
-}
 
 void Render_Menu (void){ // Colocar aqui as imagens e texturas que serão carregadas para serem usadas nas coisas do menu
 	Image_Menu = IMG_Load("Resources/Image/Menu.png");
@@ -1615,7 +1705,7 @@ void Render(){ //Precisa de Render Copy para tudo que for ser exibido na tela
 		SDL_RenderCopy(render, MagicaTD, &sMagiaTD, &dMagiaTD); // cima e baixo
 
 		if (hist_boss == 1){
-			Render_Historia6();
+			Render_Historia4();
 			hist_boss --;
 		}
 
@@ -2784,10 +2874,10 @@ void Boss_movimento(){
 		sVida_Boss.y = 4800;
 	if (Boss_Vida == 2)
 		sVida_Boss.y = 5400;
-	/*if(Boss_Vida <= 0){
+	if(Boss_Vida <= 0){
 		You_Win();
 
-	}*/
+	}
 
 }
 
@@ -2947,13 +3037,6 @@ void NPC_Falas(){
 
 		Render_Historia2();
 
-		Boss_Vida = 0;
-
-		if(Boss_Vida <= 0){
-		You_Win();
-		}
-
-
 		if (objetivo <= 0){
 			objetivo++;
 		}
@@ -2971,8 +3054,6 @@ void NPC_Falas(){
 		dBoss.x = dPlayer.x + dPlayer.w + 20;
 
 		Render_Historia3();
-		Render_Historia4();
-		Render_Historia5();
 
 
 		if (objetivo <= 2){
