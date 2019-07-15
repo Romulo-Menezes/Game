@@ -8,11 +8,15 @@
 #include <SDL2/SDL_image.h>
 #include <stdbool.h>
 #include <SDL2/SDL_mixer.h>
+#include "SDL2/SDL_ttf.h"
 
 #define JANELA_W 800
 #define JANELA_H 600
 #define PLAYER_W 31 // Largura da sprite
 #define PLAYER_H 46 // Altura da sprite
+
+
+void Destruir_Menu();
 
 //VARIÁVEIS DO MENU
 
@@ -41,7 +45,9 @@ int SPEED = 2;
 
 bool Play = true, Ataque = false;
 
-int historia1 = 0, historia2 = 0, historia3 = 0, historia4 = 0;
+int historia1 = 0, historia2 = 0, historia3 = 0, historia4 = 0, historia5 = 0, historia6 = 0, hist_boss = 1;
+
+int win = 0; 
 
 bool Fala_1 = true, Fala_2 = false;
 bool NPCFala = false, Caminho_fechado = true;
@@ -139,10 +145,18 @@ SDL_Surface* Image_Historia3;
 SDL_Texture* Text_Historia3;
 SDL_Surface* Image_Historia4;
 SDL_Texture* Text_Historia4;
+SDL_Surface* Image_Historia5;
+SDL_Texture* Text_Historia5;
+SDL_Surface* Image_Historia6;
+SDL_Texture* Text_Historia6;
 
-
+//Objetivo
 SDL_Surface* Image_Objetivo;
 SDL_Texture* Text_Objetivo;
+
+//YOU WIN
+SDL_Surface* Image_Win;
+SDL_Texture* Text_Win;
 
 //HUD
 SDL_Surface* HUD_Surface;
@@ -233,12 +247,22 @@ SDL_Rect sHist1 = {0, 0, 800, 600};
 SDL_Rect sHist2 = {0, 0, 800, 600};
 SDL_Rect sHist3 = {0, 0, 800, 600};
 SDL_Rect sHist4 = {0, 0, 800, 600};
+SDL_Rect dHist4 = {0, 0, 800, 600};
+SDL_Rect sHist5 = {0, 0, 800, 600};
+SDL_Rect sHist6 = {0, 0, 800, 600};
 
 SDL_Rect sObjetivo = {0, 29, 345, 61};
 SDL_Rect dObjetivo = {210, 20, 345, 61};
 
 int objetivo = 0;
 
+
+typedef struct {
+    char NOME[15];
+    int points;
+}SCORE;
+
+SCORE atual;
 
 typedef struct
 {
@@ -250,6 +274,333 @@ typedef struct
 
 
 Entidade player;
+
+
+TTF_Font* rFonte;
+SDL_Surface* FonteTexto;
+SDL_Texture* TextoFinal[10];
+
+SDL_Rect rScore = {200, 180, 100, 500};
+
+SDL_Rect rGameOver = {230, 30, 100, 500};
+
+SDL_Rect rMensagem  = {180, 60, 100, 500};
+
+SDL_Rect rTexto = {320, 90, 50, 200};
+
+SDL_Color Color1 = {0,0,0}; 
+SDL_Color Color2 = {71,71,71};
+SDL_Color Color3 = {120,120,120}; 
+
+char TextoFinalchar[15];
+
+void Enviar_Fonte(void){
+
+  static const int FONTSIZE = 32;
+  static const int FONTSIZE2 = 32;
+
+  rFonte = TTF_OpenFont("Resources/Fontes/FonteTop.ttf", FONTSIZE);
+  FonteTexto = TTF_RenderText_Solid(rFonte, TextoFinalchar, Color1);
+  TextoFinal[0] = SDL_CreateTextureFromSurface(render, FonteTexto);
+  SDL_QueryTexture(TextoFinal[0], NULL, NULL, &rTexto.w, &rTexto.h);
+}
+
+void Mudar_Fonte_Final(void){
+
+  FonteTexto = TTF_RenderText_Solid(rFonte, TextoFinalchar, Color1);
+  TextoFinal[0] = SDL_CreateTextureFromSurface(render, FonteTexto);
+
+  SDL_QueryTexture(TextoFinal[0], NULL, NULL, &rTexto.w, &rTexto.h);
+}
+
+
+void Verificar_Arquivo (SCORE atual) 
+{
+    SCORE top[5]; SCORE aux;
+   
+    FILE * arquivo = fopen("Score/Score.bin", "r+");
+
+    rewind(arquivo);
+
+	fread(&top, sizeof(SCORE), 5, arquivo);
+    
+	// Ordenar pra leitura //
+	for (int i = 0; i < 5; i++){
+        for (int j = i + 1; j < 5; j++){
+
+            if (top[i].points < top[j].points){
+                aux = top[i];
+                top[i] = top[j];
+                top[j] = aux;
+            }
+        }
+    }
+    // Verificar correspondência //
+    for (int i = 0; i < 5; i++){
+        if (atual.points > top[i].points){
+            if (i != 4) {
+                top[4] = top[i];
+                top[i] = atual;
+                break;
+            }
+            if(i == 4) {
+                top[i] = atual;
+            }
+        }
+    }
+    // Arrumar a Ordem //
+    for (int i = 0; i < 5; i++) {
+        for (int j = i + 1; j < 5; j++) {
+            if(top[i].points < top[j].points) {
+                aux = top[i];
+                top[i] = top[j];
+                top[j] = aux;
+            }
+        }
+    }
+    rewind(arquivo);
+    fwrite(&top, sizeof(SCORE), 5, arquivo);
+    fclose(arquivo);
+}
+
+void TextoInput (SDL_Renderer * render, SDL_Window * Janela) {
+  
+	int xp = 3850;
+
+  	int i = 0, maximum = 10;
+
+  	rTexto.x = 400;
+  	rTexto.y = 320;
+
+	for(int i = 0; i < 10; i++)
+    	TextoFinalchar[i] = '\0';
+ 
+	static char InputTexto[50] = "";
+
+	SDL_Rect sInputTxT = {320, 200, 500, 500};
+
+	static char GameOverChar[50];
+
+	bool Inserindo = true;
+
+	SDL_StartTextInput();
+	
+	Enviar_Fonte();
+
+	bool Backspace = false;
+
+    // Digte seu nome: //
+	FonteTexto = TTF_RenderText_Solid(rFonte, InputTexto, Color1);
+
+	TextoFinal[1] = SDL_CreateTextureFromSurface(render, FonteTexto);
+
+	SDL_QueryTexture(TextoFinal[1], NULL, NULL, &rMensagem.w, &rMensagem.h);
+
+    // XP //
+    sprintf (GameOverChar, "%.6i PONTOS", xp);
+
+    FonteTexto = TTF_RenderText_Solid(rFonte, GameOverChar, Color1);
+
+    TextoFinal[3] = SDL_CreateTextureFromSurface(render, FonteTexto);
+
+    SDL_QueryTexture(TextoFinal[3], NULL, NULL, &rScore.w, &rScore.h);
+
+	while(Inserindo) {
+
+	    while(SDL_PollEvent(&event)){
+
+	        if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKSPACE && !Backspace)
+	        {
+	            TextoFinalchar[i] = '\0';
+	            i--;
+	            strcat(TextoFinalchar, event.text.text); 
+
+	            rTexto.x += 15;
+	            Mudar_Fonte_Final();
+	            Backspace = true;
+	        }
+
+	        if(event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_BACKSPACE)
+	        {
+	            Backspace = false;
+	        }
+
+	        if(event.type == SDL_QUIT)
+	        {
+	          Inserindo = false;
+	        }
+
+	        else if(event.type == SDL_TEXTINPUT && i < maximum) 
+	        {
+	            i++;
+	            strcat(TextoFinalchar, event.text.text); 
+
+	            rTexto.x -= 15;
+
+	            Mudar_Fonte_Final();
+	        }
+
+	       	if(event.key.keysym.sym == SDLK_RETURN)
+	        {
+	            Inserindo = false;
+	            Play = false;
+	            menu = 1;
+	        }
+	    }
+
+	    SDL_RenderClear(render);
+	    SDL_RenderCopy(render, TextoFinal[3], NULL, &rScore);
+	    SDL_RenderCopy(render, TextoFinal[1], NULL, &rMensagem);
+	    SDL_RenderCopy(render, TextoFinal[0], NULL, &rTexto);
+	    SDL_RenderPresent(render);
+		SDL_Delay(1000/60);
+
+	}
+
+	SDL_RenderClear(render);
+	SDL_StopTextInput();
+
+    strcpy(atual.NOME, TextoFinalchar);
+    
+    atual.points = xp;
+
+    Verificar_Arquivo(atual);
+}
+
+TTF_Font* FonteRank;
+SDL_Surface* Fonte_Rank;
+SDL_Texture* TextR[10];
+
+SDL_Rect TextRectR1 = {12.5, 60, 100, 500};
+SDL_Rect TextRectR2 = {12.5, 60, 100, 200};
+
+
+
+char Rankingchar[50];
+
+void Fontes_Ranking (void){
+
+	static const int FONTSIZE = 24;
+
+	FonteRank = TTF_OpenFont("Resources/Fontes/FonteTop.ttf", FONTSIZE);
+
+	Fonte_Rank = TTF_RenderText_Solid(FonteRank, Rankingchar, Color1);
+
+	TextR[0] = SDL_CreateTextureFromSurface(render, Fonte_Rank);
+
+	SDL_QueryTexture(TextR[0], NULL, NULL, &TextRectR1.w, &TextRectR1.h);
+
+
+}
+
+void Alterar_FonteRank(SDL_Rect TextRectR1, SDL_Color Color1, char RankingChar){
+
+	Fonte_Rank = TTF_RenderText_Solid(FonteRank, Rankingchar, Color1);
+	
+	TextR[0] = SDL_CreateTextureFromSurface(render, Fonte_Rank);
+	
+	SDL_QueryTexture(TextR[0], NULL, NULL, &TextRectR1.w, &TextRectR1.h);
+}
+
+
+/*void iniciarfundo4 (void) {
+  music4 = Mix_LoadMUS("songs/menu2.mp4");
+
+  fundoSurf4 = IMG_Load("img/overworld.png");
+  fundoTex4 = SDL_CreateTextureFromSurface(render, fundoSurf4);
+  SDL_QueryTexture(fundoTex4, NULL, NULL, &mapaw4, &mapah4);
+  SDL_FreeSurface(fundoSurf4);
+
+}*/
+
+SCORE top[5];
+
+void Ranking_Arquivo (void) {
+
+  	SDL_Delay(1000/60);
+
+	SDL_RenderCopy(render, Text_Ranking, NULL, NULL);
+
+	SDL_RenderCopy(render, TextR[0], NULL, &TextRectR1);
+
+	sprintf(Rankingchar, "RANKING DE PONTOS");
+	
+	TextRectR1.x = 160; TextRectR1.y = 20;
+
+	Alterar_FonteRank(TextRectR1, Color1, Rankingchar);   
+
+	SDL_RenderCopy(render, TextR[0], NULL, &TextRectR1);
+
+	sprintf(Rankingchar, "PONTOS");
+
+	TextRectR1.x = 340; TextRectR1.y = 50;
+
+	Alterar_FonteRank(TextRectR1, Color1, RankingChar);
+ 
+	SDL_RenderCopy(render, TextR[0], NULL, &TextRectR1);
+
+	sprintf(Rankingchar, "NOME");
+
+	TextRectR1.x = 20; TextRectR1.y = 50;
+
+	Alterar_FonteRank(TextRectR1, Color1, RankingChar);
+ 
+   	SDL_RenderCopy(render, TextR[0], NULL, &TextRectR1);
+
+	for(int i =0;i<5;i++)
+	{
+	    sprintf(Rankingchar, "%s",top[i].NOME);
+
+	    TextRectR1.x = 20; 
+	    TextRectR1.y = 80+(50*i);
+
+	    Alterar_FonteRank(TextRectR1, Color1, RankingChar);
+	    
+	    SDL_RenderCopy(render, TextR[0], NULL, &TextRectR1);
+
+	    sprintf(Rankingchar, "%.6d",top[i].points);
+
+	    TextRectR1.x = 480; 
+	    TextRectR1.y = 80 +(50*i);
+
+	    Alterar_FonteRank(TextRectR1, Color1, Rankingchar);
+	    
+	    SDL_RenderCopy(render, TextR[0], NULL, &TextRectR1);
+	}
+	
+	while(SDL_PollEvent(&event)){
+
+		if (event.type == SDL_QUIT){ //Fechar e acabar com Geral
+			rank = 0;
+			menu = 0;
+			Destruir_Menu();
+			SDL_Quit();
+		}
+		
+		if (event.type == SDL_KEYDOWN){
+
+			if (event.key.keysym.sym == SDLK_ESCAPE){
+				rank = 0;
+				seletor = 0;
+			}
+		}
+	}
+}
+
+
+int Pontos (SDL_Renderer * render, SDL_Window * Janela){
+    
+    FILE* arquivo = fopen("Score/Score.bin","r");
+
+    fread(&top,sizeof(SCORE),5,arquivo);
+    
+    Ranking_Arquivo();
+
+    fclose (arquivo);
+
+
+}
+
 
 bool Inicio();
 void Render_Janela();
@@ -298,19 +649,24 @@ void Render_Historia1();
 void Render_Historia2();
 void Render_Historia3();
 void Render_Historia4();
+void Render_Historia5();
+void Render_Historia6();
 void Animar_Alerta();
 void Animar_Fogo();
 void NPC_Pos();
 void NPC_Falas();
 void Game_Music();
 void Objetivo();
+void You_Win();
 //----------------------------------------------------------------------------------------------
 
 int main(){
 
 	SDL_Init (SDL_INIT_EVERYTHING);
 
-	  Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
+	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
+
+	TTF_Init();
 
 	bool Play = true;
 
@@ -320,6 +676,7 @@ int main(){
 	}
 	else {
 
+		Fontes_Ranking();
 		Render_Janela();
 		Musicas_Tops();
 		Menu();
@@ -343,7 +700,11 @@ int main(){
 	SDL_FreeSurface(Image_Historia2);
 	SDL_FreeSurface(Image_Historia3);
 	SDL_FreeSurface(Image_Historia4);
+	SDL_FreeSurface(Image_Historia5);
+	SDL_FreeSurface(Image_Historia6);
 	SDL_FreeSurface(Image_Objetivo);
+	SDL_FreeSurface(Image_Win);
+	 SDL_FreeSurface(FonteTexto);
 
 	SDL_DestroyTexture(PlayerTexture);
 	SDL_DestroyTexture(Text_Objetivo);
@@ -351,6 +712,8 @@ int main(){
 	SDL_DestroyTexture(Text_Historia2);
 	SDL_DestroyTexture(Text_Historia3);
 	SDL_DestroyTexture(Text_Historia4);
+	SDL_DestroyTexture(Text_Historia5);
+	SDL_DestroyTexture(Text_Historia6);
 	SDL_DestroyTexture(Text_MorteBorda);
 	SDL_DestroyTexture(HUD);
 	SDL_DestroyTexture(Vida);
@@ -361,6 +724,7 @@ int main(){
 	SDL_DestroyTexture(Sala_Final);
 	SDL_DestroyTexture(Text_Esc);
 	SDL_DestroyTexture(Text_BordaEsc);
+	SDL_DestroyTexture(Text_Win);
 
 	SDL_DestroyRenderer(render); 
 	SDL_DestroyWindow(Janela);
@@ -448,10 +812,13 @@ void Menu(){
 					if (seletor == 2){
 
 						SDL_RenderClear(render);
+
 						rank = 1;
 
+						Pontos(render, Janela);
+
 						while (rank){
-							Ranking();
+							Pontos(render, Janela);
 						}
 					}
 
@@ -504,6 +871,8 @@ void Destruir_Menu(){
 //**************************************************************************************************************
 void Jogo_Inteiro(){
 
+	SDL_Delay(1000/60);
+
 	Reset();
 
 	Obter_Historia();
@@ -512,7 +881,7 @@ void Jogo_Inteiro(){
 
 	player.Px = dPlayer.x + sCamera.x;
 	player.Py = dPlayer.y + sCamera.y;
-	player.Vida = 30;
+	player.Vida = 2000;
 
 	mob0 = 2; mob1 = 2;	mob2 = 2; mob3 = 2;	mob4 = 2;
 
@@ -649,32 +1018,6 @@ void HowPlay(){
 }
 
 
-void Ranking(){
-
-	SDL_Delay(1000/60);
-	SDL_RenderClear(render);
-	SDL_RenderCopy(render, Text_Ranking, NULL, NULL);
-	SDL_RenderPresent(render);
-
-	while(SDL_PollEvent(&event)){
-
-		if (event.type == SDL_QUIT){ //Fechar e acabar com Geral
-			rank = 0;
-			menu = 0;
-			Destruir_Menu();
-			SDL_Quit();
-		}
-		
-		if (event.type == SDL_KEYDOWN){
-
-			if (event.key.keysym.sym == SDLK_ESCAPE){
-				rank = 0;
-				seletor = 0;
-			}
-		}
-	}
-}
-
 void Credits(){
 
 	SDL_Delay(1000/60);
@@ -776,6 +1119,9 @@ void Objetivo(){
 	if (objetivo == 3)
 		sObjetivo.y = 240;
 
+	if (objetivo == 4)
+		sObjetivo.y = 311;
+
 	SDL_RenderCopy (render, Text_Objetivo, &sObjetivo, &dObjetivo);
 }
 
@@ -792,6 +1138,13 @@ void Obter_Historia(){
 
 	Image_Historia4 = IMG_Load("Resources/Image/Historia-04.png");
 	Text_Historia4 = SDL_CreateTextureFromSurface(render, Image_Historia4);
+
+	Image_Historia5 = IMG_Load("Resources/Image/Historia-05.png");
+	Text_Historia5 = SDL_CreateTextureFromSurface(render, Image_Historia5);
+
+	Image_Historia6 = IMG_Load("Resources/Image/Historia-06.png");
+	Text_Historia6 = SDL_CreateTextureFromSurface(render, Image_Historia6);
+
 
 }
 
@@ -847,6 +1200,9 @@ void Obter_Fundo(){ //Imagem de fundo
 
 	Image_Objetivo = IMG_Load("Resources/Image/Objetivo.png");
 	Text_Objetivo = SDL_CreateTextureFromSurface(render, Image_Objetivo);
+
+	Image_Win = IMG_Load("Resources/Image/Win.png");
+	Text_Win = SDL_CreateTextureFromSurface(render, Image_Win);
 }
 
 void Obter_Esc (void){
@@ -935,6 +1291,37 @@ void Liberar_Musicas (void){
 	Mix_FreeChunk(Musica_3);
 }
 
+void You_Win(){
+
+	win = 1;
+
+	while (win){
+
+		SDL_Delay(1000/60);
+
+		SDL_RenderCopy(render, Text_Win, NULL, NULL);
+
+		TextoInput(render,Janela);
+
+		SDL_RenderPresent(render);
+
+		while(SDL_PollEvent(&event)){
+
+			if (event.type == SDL_KEYDOWN){
+
+				if (event.key.keysym.scancode == SDL_SCANCODE_RETURN){
+			
+					win = 0;
+					mus_game = 0;
+					Play = false;
+				}		
+			}
+
+		}
+	}
+}
+
+
 void Render_Historia1(){
 	
 	historia1 = 8; //Quantidade de imagens 
@@ -961,6 +1348,8 @@ void Render_Historia1(){
 }
 
 void Render_Historia2(){
+	
+	SDL_RenderPresent(render);
 	
 	esquerda = false; direita = false; cima = false; baixo = false;
 
@@ -991,7 +1380,7 @@ void Render_Historia3(){
 	
 	esquerda = false; direita = false; cima = false; baixo = false;
 
-	historia3 = 8; 
+	historia3 = 3; 
 
 	while (historia3){
 
@@ -1018,12 +1407,12 @@ void Render_Historia4(){
 	
 	esquerda = false; direita = false; cima = false; baixo = false;
 
-	historia4 = 3; 
+	historia4 = 1; 
 
 	while (historia4){
 
 		SDL_Delay(1000/60);
-		SDL_RenderCopy(render, Text_Historia4, &sHist4, NULL);		
+		SDL_RenderCopy(render, Text_Historia4, &sHist4, &dHist4);		
 		SDL_RenderPresent(render);
 
 		while(SDL_PollEvent(&event)){
@@ -1035,6 +1424,65 @@ void Render_Historia4(){
 					historia4 --;
 
 					sHist4.x = sHist4.x + 800;
+				}	
+			}
+		}
+	}
+}
+
+
+void Render_Historia5(){
+
+	dHist4.x = 2000; dHist4.y = 2000;
+
+	esquerda = false; direita = false; cima = false; baixo = false;
+
+	historia5 = 2; 
+
+	while (historia5){
+
+		SDL_Delay(1000/60);
+		SDL_RenderCopy(render, Text_Historia5, &sHist5, NULL);		
+		SDL_RenderPresent(render);
+
+		while(SDL_PollEvent(&event)){
+
+			if (event.type == SDL_KEYDOWN){
+
+				if (event.key.keysym.sym == SDLK_e){
+								
+					historia5 --;
+
+					sHist5.x = sHist5.x + 800;
+				}	
+			}
+		}
+	}	
+}
+
+void Render_Historia6(){
+
+	cima = true;
+	
+	esquerda = false; direita = false; cima = false; baixo = false;
+
+	historia6 = 3; 
+
+	while (historia6){
+
+		SDL_Delay(1000/60);
+		SDL_RenderCopy(render, Text_Historia6, &sHist6, NULL);		
+		SDL_RenderPresent(render);
+
+		while(SDL_PollEvent(&event)){
+
+			if (event.type == SDL_KEYDOWN){
+
+				if (event.key.keysym.sym == SDLK_e){
+								
+					historia6 --;
+
+					sHist6.x = sHist6.x + 800;
 				}	
 			}
 		}
@@ -1155,6 +1603,8 @@ void Render(){ //Precisa de Render Copy para tudo que for ser exibido na tela
 
 	else if(Muda_Mapa == 3){
 
+		dObjetivo.w = 0; dObjetivo.h = 0;
+
 		SDL_RenderCopy(render,Sala_Final, &sCamera, &dCamera);
 		SDL_RenderCopy(render, PlayerTexture, &sPlayer, &dPlayer);
 
@@ -1164,8 +1614,14 @@ void Render(){ //Precisa de Render Copy para tudo que for ser exibido na tela
 		SDL_RenderCopy(render, MagicaLR, &sMagiaLR, &dMagiaLR); // esquerda e direita
 		SDL_RenderCopy(render, MagicaTD, &sMagiaTD, &dMagiaTD); // cima e baixo
 
+		if (hist_boss == 1){
+			Render_Historia6();
+			hist_boss --;
+		}
+
 		SDL_RenderCopy (render, Vida, &sVida, &dVida);
 		SDL_RenderCopy (render, HUD, NULL, NULL);
+
 
 		if(qPress)
 			SDL_RenderCopy (render, Q_Press, NULL, NULL);
@@ -1665,8 +2121,6 @@ void MudancaDeMapa(){
 				player.Px = dPlayer.x + sCamera.x; player.Py = dPlayer.y + sCamera.y;
 
 				SPEED = 2;
-
-				Render_Historia4();
 			}
 		}
 	}
@@ -2200,6 +2654,10 @@ void Golem_Movimento(){
 	if(Golem_Vida <= 0){
 		dGolem.x = -1000;
 		player.Chave = 1;
+
+		if (objetivo <= 3){
+			objetivo++;
+		}
 	}
 
 }
@@ -2326,10 +2784,10 @@ void Boss_movimento(){
 		sVida_Boss.y = 4800;
 	if (Boss_Vida == 2)
 		sVida_Boss.y = 5400;
-	if(Boss_Vida <= 0){
-		// Fim do Jogo
+	/*if(Boss_Vida <= 0){
+		You_Win();
 
-	}
+	}*/
 
 }
 
@@ -2480,12 +2938,21 @@ void NPC_Falas(){
 	if (Fala_1 == true && NPCFala == true){
 
 		sCamera.x = 1418; sCamera.y = 1528;
-		dBoss.x = dPlayer.x + dPlayer.w + 15;
 
-		player.Px = sCamera.x + dPlayer.x + 20;
+		dBoss.x = dPlayer.x + dPlayer.w + 20;
+
+		player.Px = sCamera.x + dPlayer.x;
 		player.Py = sCamera.y + dPlayer.y;
 
+
 		Render_Historia2();
+
+		Boss_Vida = 0;
+
+		if(Boss_Vida <= 0){
+		You_Win();
+		}
+
 
 		if (objetivo <= 0){
 			objetivo++;
@@ -2504,6 +2971,9 @@ void NPC_Falas(){
 		dBoss.x = dPlayer.x + dPlayer.w + 20;
 
 		Render_Historia3();
+		Render_Historia4();
+		Render_Historia5();
+
 
 		if (objetivo <= 2){
 			objetivo++;
@@ -2537,7 +3007,7 @@ void Reset(){
 	Pos_Ataque;
 	esquerda = false; direita = false; cima = false; baixo = false;
 	colidiu = false;
-	historia1 = 0; historia2 = 0; historia3 = 0; historia4 = 0;
+	historia1 = 0; historia2 = 0; historia3 = 0; historia4 = 0; ; historia5 = 0; historia6 = 0;
 	objetivo = 0;
 
 
@@ -2545,6 +3015,8 @@ void Reset(){
 	sHist2.x = 0; sHist2.y = 0; sHist2.w = 800; sHist2.h = 600;
 	sHist3.x = 0; sHist3.y = 0; sHist3.w = 800; sHist3.h = 600;
 	sHist4.x = 0; sHist4.y = 0; sHist4.w = 800; sHist4.h = 600;
+	sHist5.x = 0; sHist5.y = 0; sHist5.w = 800; sHist5.h = 600;
+	sHist6.x = 0; sHist6.y = 0; sHist6.w = 800; sHist6.h = 600;
 
 	sObjetivo.x = 0; sObjetivo.y = 29; sObjetivo.w = 345; sObjetivo.h = 61;
 
@@ -2584,3 +3056,11 @@ void Reset(){
 	dBoss.x = 3480; dBoss.y = 2690;
 	Interacao = 0; Contador_Golem = 0; Contador_Boss = 0;
 }
+
+
+
+
+
+
+
+
